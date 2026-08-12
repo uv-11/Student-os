@@ -23,10 +23,10 @@ export const DashboardCard = forwardRef<HTMLDivElement, DashboardCardProps>(
       {...props}
     >
       {title && (
-        <div className="px-5 pt-5 pb-3 border-b border-border">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="px-4 py-3 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground tracking-tight">
             {title}
-          </p>
+          </h3>
         </div>
       )}
       {children}

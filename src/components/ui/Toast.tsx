@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "./Button";
 import { Text } from "./Text";
@@ -13,22 +13,22 @@ interface ToastProps {
 export function Toast({ message, onUndo, onClose, durationMs = 5000 }: ToastProps) {
   const [isClosing, setIsClosing] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    // Wait for animation
+    setTimeout(onClose, 300);
+  }, [onClose]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       handleClose();
     }, durationMs);
     return () => clearTimeout(timer);
-  }, [durationMs]);
-
-  const handleClose = () => {
-    setIsClosing(true);
-    // Wait for animation
-    setTimeout(onClose, 300);
-  };
+  }, [durationMs, handleClose]);
 
   return (
     <div 
-      className={`fixed bottom-safe-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 dark:bg-slate-50 text-slate-50 dark:text-slate-900 px-4 py-3 rounded-xl shadow-lg transition-all duration-300 ${
+      className={`fixed bottom-safe-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-foreground text-background px-4 py-3 rounded-xl shadow-lg transition-all duration-300 ${
         isClosing ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
       }`}
       role="alert"
@@ -43,7 +43,7 @@ export function Toast({ message, onUndo, onClose, durationMs = 5000 }: ToastProp
             onUndo();
             handleClose();
           }}
-          className="h-7 px-2 text-slate-300 hover:text-white hover:bg-slate-800 dark:text-slate-600 dark:hover:text-slate-900 dark:hover:bg-slate-200"
+          className="h-7 px-2 text-background/70 hover:text-background hover:bg-background/20"
         >
           Undo
         </Button>

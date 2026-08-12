@@ -7,9 +7,10 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 interface AgendaViewProps {
   events: CalendarEvent[];
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function AgendaView({ events }: AgendaViewProps) {
+export function AgendaView({ events, onEventClick }: AgendaViewProps) {
   const groupedEvents = useMemo(() => {
     // Group events by day (timestamp at 00:00:00)
     const groups: Record<number, CalendarEvent[]> = {};
@@ -57,7 +58,7 @@ export function AgendaView({ events }: AgendaViewProps) {
             
             <div className="pl-15 flex flex-col gap-2">
               {group.events.map(event => (
-                <EventCard key={event.id} event={event} />
+                <EventCard key={event.id} event={event} onClick={onEventClick} />
               ))}
             </div>
           </div>

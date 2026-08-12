@@ -71,7 +71,7 @@ export function WorkspaceSwitcher() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.98 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute left-3 right-3 top-full mt-1 rounded-xl border border-border-strong dark:border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50 origin-top"
+              className="absolute left-3 right-3 top-full mt-1 rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50 origin-top"
             >
               <div className="p-1">
                 <Reorder.Group axis="y" values={workspaces} onReorder={reorderWorkspaces} className="m-0 p-0 flex flex-col gap-0.5">

@@ -3,7 +3,6 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { StatCard } from "../../components/ui/StatCard";
 import { EmptyStateStory } from "../../components/analytics/EmptyStateStory";
 import { useAttendanceAnalytics } from "../../hooks/analytics/useAttendanceAnalytics";
-import { formatPercentage } from "../../utils/attendance";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 
 export default function AnalyticsAttendancePage() {
@@ -18,7 +17,7 @@ export default function AnalyticsAttendancePage() {
     );
   }
 
-  const { overallPercentage, totalSafeBunks, bestSubjects, riskSubjects, chartData } = analytics;
+  const { overallPercentage, totalClasses, bestSubjects, riskSubjects, chartData } = analytics;
 
   // Pie chart for Safe vs Risk vs Other
   const safeCount = bestSubjects.length;
@@ -39,8 +38,8 @@ export default function AnalyticsAttendancePage() {
       <PageHeader title="Attendance Insights" description="Understand your class consistency." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Overall Attendance" value={formatPercentage(overallPercentage)} />
-        <StatCard title="Safe Bunks Available" value={totalSafeBunks.toString()} />
+        <StatCard title="Overall Attendance" value={`${Math.round(overallPercentage)}%`} />
+        <StatCard title="Total Classes" value={totalClasses.toString()} />
         <StatCard title="Best Subject" value={bestSubjects[0]?.name || "—"} />
         <StatCard title="At Risk" value={riskSubjects.length.toString()} />
       </div>

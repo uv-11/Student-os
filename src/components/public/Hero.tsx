@@ -2,132 +2,65 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { APP_ROUTES, PUBLIC_ROUTES } from "../../config/routes";
 import { AnimatedSection } from "./AnimatedSection";
-import { DeviceFrame } from "./DeviceFrame";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative pt-24 pb-32 md:pt-32 md:pb-40 overflow-hidden">
-      {/* Decorative blurred background shapes */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
-        <AnimatedSection direction="up" className="max-w-4xl mx-auto">
+    <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[90vh]">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center flex flex-col items-center">
+        <AnimatedSection direction="up" className="max-w-5xl mx-auto flex flex-col items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium text-foreground mb-8 ring-1 ring-inset ring-border shadow-sm"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-muted/80 backdrop-blur-md text-sm font-medium text-foreground mb-10 ring-1 ring-inset ring-border shadow-sm hover:bg-muted transition-colors cursor-default"
           >
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
-            StudentOS 1.0 is here
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="opacity-90">StudentOS is now an Academic Operating System</span>
           </motion.div>
           
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-            className="text-5xl sm:text-6xl md:text-8xl font-bold tracking-tighter text-foreground mb-6"
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="text-4xl sm:text-6xl md:text-[5.5rem] font-bold tracking-tight text-foreground mb-6 md:mb-8 leading-[1.1] max-w-4xl"
           >
-            Ace your classes. <br className="hidden sm:block" />
-            <span className="text-muted-foreground italic font-serif pr-2 font-normal">Own</span> 
-            your time.
+            Your academic life, <br className="hidden sm:block" />
+            <span className="text-muted-foreground font-serif italic pr-2 font-normal">finally</span> connected.
           </motion.h1>
           
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-            className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="text-base sm:text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed px-2"
           >
-            The ultimate all-in-one workspace built specifically for students. Manage your attendance, assignments, and focus—all in one beautifully designed app.
+            Stop managing your semester across ten disconnected apps. Attendance, deadlines, calendar, habits, and focus—all in one local-first workspace.
           </motion.p>
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
           >
             <Link
               to={APP_ROUTES.DASHBOARD}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 dark:border border-border-strong bg-primary text-primary-foreground font-bold hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] dark:hover:shadow-none transition-all flex items-center justify-center gap-2"
+              className="group w-full sm:w-auto px-8 py-4 rounded-2xl bg-foreground text-background font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl shadow-foreground/10"
             >
-              Start using StudentOS
+              Enter Workspace
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to={PUBLIC_ROUTES.FEATURES}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 dark:border border-border-strong bg-card text-foreground font-bold hover:bg-muted transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-muted/80 backdrop-blur-sm text-foreground font-semibold hover:bg-muted transition-colors flex items-center justify-center border border-border"
             >
-              Explore features
+              See how it works
             </Link>
-          </motion.div>
-        </AnimatedSection>
-
-        {/* Device Showcase */}
-        <AnimatedSection direction="up" delay={0.2} className="mt-16 mx-auto px-4 sm:px-0">
-          <motion.div
-            animate={{ y: [-5, 5] }}
-            transition={{ duration: 7, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
-          >
-            <DeviceFrame type="desktop">
-              <div className="w-full h-full bg-background flex flex-col border-t-2 dark:border-t border-border-strong">
-                 {/* App Header */}
-                 <div className="h-14 border-b-2 dark:border-b border-border-strong bg-card flex items-center px-6 gap-4">
-                   <div className="flex gap-2">
-                     <div className="w-3 h-3 rounded-full bg-rose-500 border border-border-strong" />
-                     <div className="w-3 h-3 rounded-full bg-amber-500 border border-border-strong" />
-                     <div className="w-3 h-3 rounded-full bg-emerald-500 border border-border-strong" />
-                   </div>
-                   <div className="h-6 w-64 bg-muted border border-border-strong rounded-md mx-auto" />
-                 </div>
-                 
-                 {/* App Body */}
-                 <div className="flex-1 flex overflow-hidden">
-                   {/* Sidebar */}
-                   <div className="w-64 h-full border-r-2 dark:border-r border-border-strong bg-card hidden md:flex flex-col p-4 gap-2">
-                     <div className="h-8 bg-muted rounded border border-border-strong mb-4" />
-                     <div className="h-10 bg-primary/10 border border-primary/20 rounded-lg" />
-                     <div className="h-10 bg-muted/50 rounded-lg" />
-                     <div className="h-10 bg-muted/50 rounded-lg" />
-                     <div className="h-10 bg-muted/50 rounded-lg" />
-                   </div>
-                   
-                   {/* Main Content */}
-                   <div className="flex-1 bg-background p-8 flex flex-col gap-8">
-                      <div className="flex justify-between items-end">
-                        <div className="space-y-2">
-                          <div className="h-8 w-48 bg-foreground rounded-lg" />
-                          <div className="h-4 w-64 bg-muted-foreground/30 rounded" />
-                        </div>
-                        <div className="h-10 w-32 bg-primary rounded-xl" />
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-6">
-                        <div className="h-32 bg-card rounded-2xl border-2 dark:border border-border-strong p-4 flex flex-col justify-between">
-                           <div className="h-10 w-10 bg-indigo-500/20 rounded-lg border border-indigo-500/30" />
-                           <div className="h-4 w-24 bg-muted-foreground/30 rounded" />
-                        </div>
-                        <div className="h-32 bg-card rounded-2xl border-2 dark:border border-border-strong p-4 flex flex-col justify-between">
-                           <div className="h-10 w-10 bg-emerald-500/20 rounded-lg border border-emerald-500/30" />
-                           <div className="h-4 w-24 bg-muted-foreground/30 rounded" />
-                        </div>
-                        <div className="h-32 bg-card rounded-2xl border-2 dark:border border-border-strong p-4 flex flex-col justify-between">
-                           <div className="h-10 w-10 bg-amber-500/20 rounded-lg border border-amber-500/30" />
-                           <div className="h-4 w-24 bg-muted-foreground/30 rounded" />
-                        </div>
-                      </div>
-                      
-                      <div className="w-full flex-1 bg-card rounded-2xl border-2 dark:border border-border-strong flex flex-col p-6 gap-4">
-                         <div className="h-6 w-48 bg-foreground/80 rounded" />
-                         <div className="flex-1 bg-muted/30 rounded-xl border border-border-strong" />
-                      </div>
-                   </div>
-                 </div>
-              </div>
-            </DeviceFrame>
           </motion.div>
         </AnimatedSection>
       </div>
     </section>
   );
 }
+

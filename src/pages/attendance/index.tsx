@@ -1,202 +1,124 @@
 import { useState, useMemo } from "react";
 import { Container } from "../../components/ui/Container";
-import { PageHeader } from "../../components/ui/PageHeader";
-import { EmptyState } from "../../components/ui/EmptyState";
-import { Button } from "../../components/ui/Button";
-import { Toast } from "../../components/ui/Toast";
-import { CheckSquare, Plus, SearchX } from "lucide-react";
-import { useAttendanceStore } from "../../store/attendanceStore";
-import { SubjectCard } from "../../components/attendance/SubjectCard";
-import { SubjectForm } from "../../components/attendance/SubjectForm";
-import { AttendanceToolbar, type SortOption } from "../../components/attendance/AttendanceToolbar";
-import { DataOptions } from "../../components/attendance/DataOptions";
-import type { Subject } from "../../types/subject";
-import { AttendanceStatus } from "../../types/attendanceStatus";
-import { calculateCurrentPercentage, calculateStatus } from "../../utils/attendance";
+import { useAttendanceData } from "../../features/attendance/application/hooks";
+import { SemesterSetup } from "../../features/attendance/components/SemesterSetup";
+import { SubjectSetup } from "../../features/attendance/components/SubjectSetup";
+import { TimetableSetup } from "../../features/attendance/components/TimetableSetup";
+import { TodayClasses } from "../../features/attendance/components/TodayClasses";
+import { OverallStats } from "../../features/attendance/components/OverallStats";
+import { SubjectStats } from "../../features/attendance/components/SubjectStats";
+
+type SetupStep = 'SEMESTER' | 'SUBJECTS' | 'TIMETABLE' | 'READY';
+
+const STEPS: readonly SetupStep[] = ['SEMESTER', 'SUBJECTS', 'TIMETABLE'];
 
 export default function AttendancePage() {
-  const { subjects, deleteSubject, restoreSubject } = useAttendanceStore();
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+    const { activeSemester, subjects, isLoading, timetableVersions } = useAttendanceData();
+    const [overrideState, setOverrideState] = useState<SetupStep | null>(null);
 
-  // Search, Filter, Sort state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | "ALL">("ALL");
-  const [sortBy, setSortBy] = useState<SortOption>("createdAt");
+    const defaultState: SetupStep = useMemo(() => {
+        if (!activeSemester) return 'SEMESTER';
+        if (subjects.length === 0) return 'SUBJECTS';
+        if (timetableVersions.length === 0) return 'TIMETABLE';
+        return 'READY';
+    }, [activeSemester, subjects.length, timetableVersions.length]);
 
-  // Toast / Undo State
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [lastDeletedSubject, setLastDeletedSubject] = useState<Subject | null>(null);
+    const setupState = overrideState ?? defaultState;
 
-  const handleEdit = (subject: Subject) => {
-    setIsAdding(false);
-    setEditingSubject(subject);
-  };
-
-  const handleCloseForm = () => {
-    setIsAdding(false);
-    setEditingSubject(null);
-  };
-
-  // Replace default store delete to inject Undo
-  const handleDelete = (subjectId: string) => {
-    const subjectToDel = subjects.find(s => s.id === subjectId);
-    if (subjectToDel) {
-      setLastDeletedSubject(subjectToDel);
-      deleteSubject(subjectId);
-      setToastMessage(`Deleted ${subjectToDel.name}`);
-    }
-  };
-
-  const handleUndo = () => {
-    if (lastDeletedSubject) {
-      restoreSubject(lastDeletedSubject);
-      setLastDeletedSubject(null);
-      setToastMessage(null);
-    }
-  };
-
-  const filteredAndSortedSubjects = useMemo(() => {
-    // 1. Filter
-    let result = subjects;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s => s.name.toLowerCase().includes(q));
+    if (isLoading) {
+        return (
+            <Container>
+                <div className="animate-pulse h-8 w-48 bg-muted rounded mb-8" />
+                <div className="space-y-6">
+                    <div className="h-40 bg-card border border-border rounded-xl" />
+                    <div className="h-64 bg-card border border-border rounded-xl" />
+                </div>
+            </Container>
+        );
     }
 
-    if (statusFilter !== "ALL") {
-      result = result.filter(s => {
-        const target = s.targetAttendance ?? 75;
-        const status = calculateStatus(target, s.totalClasses, s.attendedClasses);
-        return status === statusFilter;
-      });
+    const renderProgress = (current: SetupStep) => {
+        if (current === 'READY') return null;
+        return (
+            <div className="flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-wider mb-8">
+                {STEPS.map((step, idx) => {
+                    const isActive = step === current;
+                    const isPast = STEPS.indexOf(step) < STEPS.indexOf(current);
+                    return (
+                        <div key={step} className="flex items-center gap-4">
+                            <span className={isActive ? 'text-primary' : isPast ? 'text-muted-foreground' : 'text-muted'}>
+                                {step}
+                            </span>
+                            {idx < STEPS.length - 1 && <span className="text-border">→</span>}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    if (setupState === 'SEMESTER') {
+        return (
+            <Container>
+                <div className="pt-12">
+                    {renderProgress(setupState)}
+                    <SemesterSetup onComplete={() => setOverrideState('SUBJECTS')} />
+                </div>
+            </Container>
+        );
     }
 
-    // 2. Sort
-    result = [...result].sort((a, b) => {
-      if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
-      }
-      if (sortBy === "percentage") {
-        const aPct = calculateCurrentPercentage(a.attendedClasses, a.totalClasses);
-        const bPct = calculateCurrentPercentage(b.attendedClasses, b.totalClasses);
-        return bPct - aPct; // High to low
-      }
-      if (sortBy === "status") {
-        const aStatus = calculateStatus(a.targetAttendance ?? 75, a.totalClasses, a.attendedClasses);
-        const bStatus = calculateStatus(b.targetAttendance ?? 75, b.totalClasses, b.attendedClasses);
-        const order: Record<AttendanceStatus, number> = {
-          [AttendanceStatus.IMPOSSIBLE]: 0,
-          [AttendanceStatus.CRITICAL]: 1,
-          [AttendanceStatus.WARNING]: 2,
-          [AttendanceStatus.SAFE]: 3,
-        };
-        return order[aStatus] - order[bStatus];
-      }
-      return b.createdAt - a.createdAt; // Newest first
-    });
+    if (setupState === 'SUBJECTS') {
+        return (
+            <Container>
+                <div className="pt-12">
+                    {renderProgress(setupState)}
+                    <SubjectSetup 
+                        onComplete={() => setOverrideState('TIMETABLE')} 
+                        onBack={() => setOverrideState('SEMESTER')} 
+                    />
+                </div>
+            </Container>
+        );
+    }
 
-    return result;
-  }, [subjects, searchQuery, statusFilter, sortBy]);
+    if (setupState === 'TIMETABLE') {
+        return (
+            <Container>
+                <div className="pt-12">
+                    {renderProgress(setupState)}
+                    <TimetableSetup 
+                        onComplete={() => setOverrideState('READY')} 
+                        onBack={() => setOverrideState('SUBJECTS')}
+                    />
+                </div>
+            </Container>
+        );
+    }
 
-  return (
-    <Container>
-      <PageHeader 
-        title="Attendance" 
-        description="Track your attendance, required classes, and safe bunks." 
-        actions={
-          !isAdding && !editingSubject && (
-            <Button onClick={() => setIsAdding(true)} className="hidden md:flex">
-              <Plus className="h-4 w-4 mr-2" /> Add Subject
-            </Button>
-          )
-        }
-      />
-
-      <div className="flex flex-col gap-6 pb-24 md:pb-12">
-        {subjects.length > 0 && !isAdding && !editingSubject && (
-          <AttendanceToolbar 
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
-        )}
-
-        {isAdding && (
-          <SubjectForm onClose={handleCloseForm} />
-        )}
-
-        {editingSubject && (
-          <SubjectForm initialData={editingSubject} onClose={handleCloseForm} />
-        )}
-
-        {subjects.length === 0 && !isAdding && !editingSubject ? (
-          <EmptyState 
-            icon={<CheckSquare className="h-6 w-6" />}
-            title="No subjects added"
-            description="Add your first subject to start tracking your attendance."
-            action={<Button onClick={() => setIsAdding(true)}>Add Subject</Button>}
-          />
-        ) : filteredAndSortedSubjects.length === 0 && !isAdding && !editingSubject ? (
-          <EmptyState 
-            icon={<SearchX className="h-6 w-6" />}
-            title="No matches found"
-            description="Try adjusting your search or filter settings."
-            action={
-              <Button variant="outline" onClick={() => {
-                setSearchQuery("");
-                setStatusFilter("ALL");
-              }}>
-                Clear Filters
-              </Button>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndSortedSubjects.map((subject) => (
-              editingSubject?.id === subject.id ? null : (
-                <SubjectCard 
-                  key={subject.id} 
-                  subject={subject} 
-                  onEdit={handleEdit} 
-                  onDeleteOverride={() => handleDelete(subject.id)}
+    return (
+        <Container>
+            <div className="flex flex-col gap-6 pb-24 md:pb-12 pt-6">
+                {/* 1. Hero Section: Weekly Attendance Timetable */}
+                <TimetableSetup 
+                    readOnly={true}
+                    onEditSchedule={() => setOverrideState('TIMETABLE')}
+                    onComplete={() => {}}
+                    onBack={() => {}}
                 />
-              )
-            ))}
-          </div>
-        )}
 
-        {subjects.length > 0 && !isAdding && !editingSubject && (
-          <DataOptions 
-            onImportSuccess={() => setToastMessage("Data imported successfully")}
-            onImportError={(msg) => setToastMessage(`Import failed: ${msg}`)}
-          />
-        )}
-      </div>
+                {/* 2. Today's Classes */}
+                <TodayClasses />
 
-      {/* Mobile FAB */}
-      {!isAdding && !editingSubject && (
-        <Button 
-          onClick={() => setIsAdding(true)} 
-          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg md:hidden flex items-center justify-center p-0 z-40"
-          aria-label="Add Subject"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      )}
+                {/* 3. Overall Statistics */}
+                <OverallStats />
 
-      {/* Toast */}
-      {toastMessage && (
-        <Toast 
-          message={toastMessage} 
-          onUndo={lastDeletedSubject ? handleUndo : undefined} 
-          onClose={() => setToastMessage(null)} 
-        />
-      )}
-    </Container>
-  );
+                {/* 4. Subject Cards */}
+                <div className="mt-2">
+                    <h3 className="text-lg font-bold tracking-tight mb-4">Subjects</h3>
+                    <SubjectStats />
+                </div>
+            </div>
+        </Container>
+    );
 }

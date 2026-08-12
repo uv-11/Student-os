@@ -6,12 +6,23 @@ import type { PomodoroSettings } from "../types/pomodoroSettings";
 import { DEFAULT_POMODORO_SETTINGS } from "../types/pomodoroSettings";
 import { PomodoroMode } from "../types/pomodoroMode";
 
+interface ActiveTimerState {
+  mode: PomodoroMode;
+  isRunning: boolean;
+  sessionTotal: number;
+  timeRemaining: number;
+  targetEndTime: number | null;
+}
+
 interface PomodoroState {
   sessions: PomodoroSession[];
   settings: PomodoroSettings;
+  activeTimer: ActiveTimerState | null;
   addSession: (mode: PomodoroMode, durationMinutes: number) => void;
   clearHistory: () => void;
   updateSettings: (updates: Partial<PomodoroSettings>) => void;
+  setActiveTimer: (timer: ActiveTimerState | null) => void;
+  updateActiveTimer: (updates: Partial<ActiveTimerState>) => void;
 }
 
 export const usePomodoroStore = create<PomodoroState>()(
@@ -19,16 +30,31 @@ export const usePomodoroStore = create<PomodoroState>()(
     (set) => ({
       sessions: [],
       settings: DEFAULT_POMODORO_SETTINGS,
+      activeTimer: null,
+      setActiveTimer: (timer) => set({ activeTimer: timer }),
+      updateActiveTimer: (updates) => set((state) => ({ 
+        activeTimer: state.activeTimer ? { ...state.activeTimer, ...updates } : null 
+      })),
       addSession: (mode, durationMinutes) => {
-        const session: PomodoroSession = {
-          id: crypto.randomUUID(),
-          mode,
-          durationMinutes,
-          completedAt: Date.now(),
-        };
-        set((state) => ({
-          sessions: [session, ...state.sessions].slice(0, 100), // cap history
-        }));
+        set((state) => {
+          const now = Date.now();
+          const lastSession = state.sessions[0];
+          
+          // Prevent duplicate sessions within 10 seconds
+          if (lastSession && now - lastSession.completedAt < 10000) {
+            return state;
+          }
+
+          const session: PomodoroSession = {
+            id: crypto.randomUUID(),
+            mode,
+            durationMinutes,
+            completedAt: now,
+          };
+          return {
+            sessions: [session, ...state.sessions].slice(0, 100), // cap history
+          };
+        });
       },
       clearHistory: () => set({ sessions: [] }),
       updateSettings: (updates) =>
@@ -37,14 +63,17 @@ export const usePomodoroStore = create<PomodoroState>()(
     { 
       name: "studentos-pomodoro-storage",
       storage: createJSONStorage(() => activeStorageAdapter),
-      merge: (persistedState: any, currentState) => ({
-        ...currentState,
-        ...persistedState,
-        settings: {
-          ...currentState.settings,
-          ...(persistedState?.settings || {}),
-        },
-      }),
+      merge: (persistedState: unknown, currentState) => {
+        const state = persistedState as Partial<PomodoroState>;
+        return {
+          ...currentState,
+          ...state,
+          settings: {
+            ...currentState.settings,
+            ...(state?.settings || {}),
+          },
+        };
+      },
     }
   )
 );

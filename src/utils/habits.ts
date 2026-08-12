@@ -1,6 +1,6 @@
 // ─── Date String Helpers ─────────────────────────────────────────────────────
 
-function dateToString(d: Date): string {
+export function dateToString(d: Date): string {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -15,8 +15,8 @@ function addDays(dateStr: string, days: number): string {
   return dateToString(date);
 }
 
-export function getTodayString(): string {
-  return dateToString(new Date());
+export function getTodayString(d?: Date): string {
+  return dateToString(d || new Date());
 }
 
 export function getYesterdayString(): string {
@@ -25,7 +25,7 @@ export function getYesterdayString(): string {
 
 // ─── Completion Queries ───────────────────────────────────────────────────────
 
-export function isCompletedOn(log: string[], dateStr: string): boolean {
+function isCompletedOn(log: string[], dateStr: string): boolean {
   return log.includes(dateStr);
 }
 

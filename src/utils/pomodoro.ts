@@ -9,7 +9,7 @@ export function formatTime(seconds: number): string {
 }
 
 /** Filters sessions completed today (local calendar day). */
-export function getTodaySessions(sessions: PomodoroSession[]): PomodoroSession[] {
+function getTodaySessions(sessions: PomodoroSession[]): PomodoroSession[] {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   return sessions.filter((s) => s.completedAt >= todayStart);

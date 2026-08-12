@@ -1,59 +1,44 @@
 import { useMemo } from "react";
-import { useAttendanceStore } from "../../store/attendanceStore";
-import { calculateCurrentPercentage, calculateStatus, calculateSafeBunks } from "../../utils/attendance";
-import { AttendanceStatus } from "../../types/attendanceStatus";
+import { useAttendanceData } from "../../features/attendance/application/hooks";
 
 export function useAttendanceAnalytics() {
-  const { subjects } = useAttendanceStore();
+  const { overallStats, subjectStats, subjects } = useAttendanceData();
 
   return useMemo(() => {
-    if (subjects.length === 0) return null;
-
-    let totalAttended = 0;
-    let totalClasses = 0;
-    let totalSafeBunks = 0;
+    if (!overallStats || !subjectStats || subjects.length === 0) return null;
 
     const subjectsWithStats = subjects.map(s => {
-      const target = s.targetAttendance ?? 75;
-      const status = calculateStatus(target, s.totalClasses, s.attendedClasses);
-      const safeBunks = calculateSafeBunks(target, s.totalClasses, s.attendedClasses);
-      const percentage = calculateCurrentPercentage(s.attendedClasses, s.totalClasses);
-
-      totalAttended += s.attendedClasses;
-      totalClasses += s.totalClasses;
-      totalSafeBunks += safeBunks;
-
+      const stats = subjectStats[s.id];
       return {
         ...s,
-        status,
-        safeBunks,
-        percentage
+        percentage: stats?.attendancePercentage || 0,
+        attendedClasses: stats?.totalAttended || 0,
+        totalClasses: stats?.totalScheduled || 0,
+        missedClasses: stats?.totalAbsent || 0
       };
     });
 
-    const overallPercentage = calculateCurrentPercentage(totalAttended, totalClasses);
-
-    // Sort to find best and risk subjects
     const sorted = [...subjectsWithStats].sort((a, b) => b.percentage - a.percentage);
-    const bestSubjects = sorted.filter(s => s.status === AttendanceStatus.SAFE).slice(0, 3);
-    const riskSubjects = sorted.filter(s => s.status !== AttendanceStatus.SAFE).reverse().slice(0, 3);
+    
+    // In the new domain we don't have "Safe Bunks", we just look at top performers and bottom performers
+    const bestSubjects = sorted.filter(s => s.percentage >= 75).slice(0, 3);
+    const riskSubjects = sorted.filter(s => s.percentage < 75).reverse().slice(0, 3);
 
-    // Monthly Trends mock (assuming subjects don't track attendance per day yet, we just provide the static data for the chart, or derive if we have logs. Since we only have totalClasses/attendedClasses, we will do a simple representation)
     const chartData = subjectsWithStats.map(s => ({
       name: s.name.substring(0, 10),
       attended: s.attendedClasses,
-      missed: s.totalClasses - s.attendedClasses,
+      missed: s.missedClasses,
       percentage: s.percentage,
     }));
 
     return {
-      overallPercentage,
-      totalSafeBunks,
+      overallPercentage: overallStats.attendancePercentage,
+      totalClasses: overallStats.totalScheduled,
+      totalAttended: overallStats.totalAttended,
+      totalSafeBunks: 0, // Deprecated
       bestSubjects,
       riskSubjects,
-      chartData,
-      totalClasses,
-      totalAttended,
+      chartData
     };
-  }, [subjects]);
+  }, [overallStats, subjectStats, subjects]);
 }

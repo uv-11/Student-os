@@ -68,9 +68,9 @@ export function WorkspaceManagerModal({ isOpen, onClose, workspaceIdToEdit }: Pr
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border bg-card p-6 shadow-xl"
+            className="fixed left-[50%] top-[50%] z-50 w-full max-w-md max-h-[90dvh] flex flex-col translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border bg-card shadow-xl"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex shrink-0 items-center justify-between p-6 pb-4 border-b border-border">
               <h2 className="text-xl font-bold text-foreground">
                 {isEditing ? "Edit Workspace" : "Create Workspace"}
               </h2>
@@ -82,7 +82,7 @@ export function WorkspaceManagerModal({ isOpen, onClose, workspaceIdToEdit }: Pr
               </button>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-5 p-6 overflow-y-auto flex-1">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-foreground">Workspace Name</label>
                 <Input

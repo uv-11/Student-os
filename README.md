@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# StudentOS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local-first Academic Operating System built for students.
 
-Currently, two official plugins are available:
+## Why StudentOS
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Academic tools are often fragmented across disparate apps: attendance trackers, calendars, assignment planners, habit builders, timers, and note-taking apps. StudentOS unifies these essential utilities into a single, cohesive, offline-capable dashboard.
 
-## React Compiler
+## Core Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Dashboard**: High-level overview of daily tasks and academic standing.
+- **Attendance**: Track classes, calculate required attendance, and plan leaves.
+- **Assignments**: Kanban-style tracker for homework and projects.
+- **Calendar**: Visual week/month planner.
+- **Habits**: Daily streak and habit building.
+- **Pomodoro**: Focus timer.
+- **Study Sessions**: Track time spent on specific subjects.
+- **Profile**: Academic standing and multi-workspace support.
+- **Settings**: App preferences and data management.
+- **Local Backup**: JSON export/import of all local data.
+- **PWA**: Installable progressive web app for an offline-oriented experience.
 
-## Expanding the ESLint configuration
+## Product Philosophy
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Local-First**: Your data lives on your device, avoiding unnecessary network dependencies.
+- **Student-Focused**: Built specifically to solve academic scheduling and tracking problems.
+- **Privacy-Conscious**: No tracking or hidden telemetry.
+- **Modular**: Use only the tools you need.
+- **Reliable**: Functions beautifully offline as a PWA.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Architecture
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+StudentOS is a React application built with TypeScript and Vite. It utilizes Zustand for state management and IndexedDB for robust local persistence across various domain stores (Attendance, Assignments, etc.). 
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The `BackupEngine` provides snapshots of this local state. The `LocalFileProvider` manages local JSON exports and imports. 
+
+*Note: Google Drive integration currently exists as an in-progress experimental frontend provider. A secure backend OAuth architecture is planned for a future phase to make this fully production-ready.*
+
+## Tech Stack
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Zustand
+- IndexedDB (idb-keyval)
+- Vite PWA
+
+## Local Development
+
+Install dependencies:
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Start the development server:
+```bash
+npm run dev
 ```
+
+Run the linter:
+```bash
+npm run lint
+```
+
+Build for production:
+```bash
+npm run build
+```
+
+## Environment Variables
+
+See `.env.example` for required configuration variables. Do not expose actual secrets in client-side code.
+
+## Deployment
+
+The current frontend architecture is optimized for deployment on Vercel. 
+
+## Privacy
+
+StudentOS operates on a local-first model. All data generated by the user remains locally controlled within the browser's IndexedDB. We cannot access, read, or distribute your academic data.

@@ -20,7 +20,10 @@ import type { Habit } from "../../types/habit";
 export default function HabitsPage() {
   const { habits, deleteHabit, restoreHabit } = useHabitStore();
 
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAdding, setIsAdding] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("action") === "add";
+  });
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,6 +39,11 @@ export default function HabitsPage() {
   };
 
   const handleCloseForm = () => {
+    if (isAdding) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState({}, "", url);
+    }
     setIsAdding(false);
     setEditingHabit(null);
   };
@@ -81,6 +89,10 @@ export default function HabitsPage() {
 
   const isFiltering = searchQuery.trim() !== "" || filter !== "ALL";
 
+  const totalHabits = habits.length;
+  const completedToday = habits.filter(h => isCompletedToday(h.completionLog)).length;
+  const progressPct = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
+
   return (
     <Container>
       <PageHeader
@@ -96,6 +108,18 @@ export default function HabitsPage() {
       />
 
       <div className="flex flex-col gap-6 pb-24 md:pb-12">
+        {totalHabits > 0 && !isAdding && !editingHabit && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-bold text-foreground">Today's Progress</span>
+              <span className="text-muted-foreground font-semibold tracking-tight">{completedToday} / {totalHabits} completed ({progressPct}%)</span>
+            </div>
+            <div className="h-2.5 w-full bg-muted/50 rounded-full overflow-hidden border border-border/50">
+              <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        )}
+
         {habits.length > 0 && !isAdding && !editingHabit && (
           <HabitsToolbar
             searchQuery={searchQuery}

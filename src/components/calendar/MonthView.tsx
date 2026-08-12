@@ -7,9 +7,10 @@ import { clsx } from "clsx";
 interface MonthViewProps {
   events: CalendarEvent[];
   currentDate: Date;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function MonthView({ events, currentDate }: MonthViewProps) {
+export function MonthView({ events, currentDate, onEventClick }: MonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
@@ -22,7 +23,7 @@ export function MonthView({ events, currentDate }: MonthViewProps) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="flex flex-col w-full h-full min-h-[600px] border rounded-2xl bg-card overflow-hidden shadow-sm">
+    <div className="flex flex-col w-full h-full min-h-[600px] border border-border sm:rounded-xl bg-card overflow-hidden shadow-sm">
       {/* Header Row */}
       <div className="grid grid-cols-7 border-b bg-muted/30">
         {weekDays.map(day => (
@@ -46,7 +47,7 @@ export function MonthView({ events, currentDate }: MonthViewProps) {
 
           return (
             <div 
-              key={day.toISOString()} 
+              key={day.getTime()} 
               className={clsx(
                 "min-h-[100px] p-1 sm:p-2 border-r border-b flex flex-col gap-1 transition-colors hover:bg-muted/10",
                 !isCurrentMonth && "bg-muted/5",
@@ -72,7 +73,7 @@ export function MonthView({ events, currentDate }: MonthViewProps) {
               
               <div className="hidden sm:flex flex-col gap-1 mt-1 overflow-y-auto max-h-[100px] scrollbar-none">
                 {dayEvents.map(event => (
-                  <EventCard key={event.id} event={event} isCompact={true} />
+                  <EventCard key={event.id} event={event} isCompact={true} onClick={onEventClick} />
                 ))}
               </div>
             </div>

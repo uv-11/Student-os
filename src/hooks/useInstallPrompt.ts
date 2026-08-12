@@ -39,9 +39,9 @@ export function useInstallPrompt() {
     // Wait for the user to respond to the prompt
     const choiceResult = await deferredPrompt.userChoice;
     if (choiceResult.outcome === "accepted") {
-      console.log("User accepted the install prompt");
+      // accepted
     } else {
-      console.log("User dismissed the install prompt");
+      // dismissed
     }
     
     // We can only use the prompt once

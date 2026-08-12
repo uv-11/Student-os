@@ -69,7 +69,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-muted-foreground selection:bg-primary/20 dark:selection:bg-primary/20">
+    <div className="flex h-[100dvh] overflow-hidden bg-background text-muted-foreground selection:bg-primary/20 dark:selection:bg-primary/20">
       <Sidebar />
       <div className="flex flex-col flex-1 w-full relative">
         <Header />

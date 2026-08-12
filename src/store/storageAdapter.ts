@@ -15,7 +15,7 @@ export interface StorageAdapter extends StateStorage {
  * LocalStorage Adapter (Current Source of Truth)
  * Synchronous, blocking, 5MB limit. Used for Phase 1.
  */
-export const localStorageAdapter: StorageAdapter = {
+const localStorageAdapter: StorageAdapter = {
   getItem: (name) => localStorage.getItem(name),
   setItem: (name, value) => localStorage.setItem(name, value),
   removeItem: (name) => localStorage.removeItem(name),
@@ -35,53 +35,6 @@ export const indexedDBAdapter: StorageAdapter = {
   },
   removeItem: async (name) => {
     await del(name);
-  },
-};
-
-/**
- * Future Supabase Adapter (Placeholder)
- * Will handle cloud sync with offline-first capabilities.
- */
-export const supabaseAdapter: StorageAdapter = {
-  getItem: async (name) => {
-    console.warn("Supabase adapter not implemented yet for:", name);
-    return null;
-  },
-  setItem: async (name, value) => {
-    console.warn("Supabase adapter not implemented yet for:", name, value);
-  },
-  removeItem: async (name) => {
-    console.warn("Supabase adapter not implemented yet for:", name);
-  },
-};
-
-/**
- * Migration Adapter (Future Use)
- * Example architecture of how we will seamlessly migrate users.
- * When we are ready to switch the source of truth, we will use this adapter.
- */
-export const migrationAdapter: StorageAdapter = {
-  getItem: async (name) => {
-    // 1. Try to get from the new source of truth (IndexedDB)
-    const idbValue = await indexedDBAdapter.getItem(name);
-    if (idbValue) return idbValue;
-
-    // 2. If missing, check the old source of truth (localStorage)
-    const lsValue = await Promise.resolve(localStorageAdapter.getItem(name));
-    if (lsValue && typeof lsValue === "string") {
-      // 3. Transparently migrate the data to IndexedDB
-      await indexedDBAdapter.setItem(name, lsValue);
-      // Optional: clean up old storage
-      // localStorageAdapter.removeItem(name);
-      return lsValue;
-    }
-
-    return null;
-  },
-  setItem: indexedDBAdapter.setItem,
-  removeItem: async (name) => {
-    await indexedDBAdapter.removeItem(name);
-    await localStorageAdapter.removeItem(name); // Ensure it's cleared everywhere
   },
 };
 

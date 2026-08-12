@@ -5,6 +5,7 @@ import { usePomodoroStore } from "../store/pomodoroStore";
 import { AssignmentStatus } from "../types/assignmentStatus";
 import { PomodoroMode } from "../types/pomodoroMode";
 import { useStudyStore } from "../store/studyStore";
+import { useCalendarStore } from "../store/calendarStore";
 import type { CalendarEvent } from "../types/calendar";
 
 export function useCalendarEvents(): CalendarEvent[] {
@@ -12,9 +13,10 @@ export function useCalendarEvents(): CalendarEvent[] {
   const { assignments } = useAssignmentStore();
   const { sessions: pomodoroSessions } = usePomodoroStore();
   const { sessions: studySessions } = useStudyStore();
+  const { events: customEvents } = useCalendarStore();
 
   return useMemo(() => {
-    const events: CalendarEvent[] = [];
+    const events: CalendarEvent[] = [...customEvents];
 
     // Map Todos
     todos.forEach((todo) => {
@@ -76,5 +78,5 @@ export function useCalendarEvents(): CalendarEvent[] {
     });
 
     return events;
-  }, [todos, assignments, pomodoroSessions, studySessions]);
+  }, [todos, assignments, pomodoroSessions, studySessions, customEvents]);
 }

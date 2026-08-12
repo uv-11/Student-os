@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { useStudyStore } from "../../store/studyStore";
 import { format, startOfWeek, startOfMonth } from "date-fns";
+import { useNow } from "../useNow";
 
 export function useStudyAnalytics() {
   const { sessions } = useStudyStore();
+  const now = useNow();
 
   return useMemo(() => {
     if (sessions.length === 0) return null;
@@ -16,7 +18,6 @@ export function useStudyAnalytics() {
     const courseDistribution = new Map<string, number>();
     const allSessionDates: Date[] = [];
 
-    const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }).getTime();
     const monthStart = startOfMonth(now).getTime();
@@ -93,8 +94,9 @@ export function useStudyAnalytics() {
       averageSessionLength,
       favoriteCourse,
       longestStreak,
+      currentStreak,
       courseDistribution: pieData.sort((a, b) => b.value - a.value),
       allSessionDates,
     };
-  }, [sessions]);
+  }, [sessions, now]);
 }

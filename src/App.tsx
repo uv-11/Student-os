@@ -36,7 +36,6 @@ const ContactPage = lazy(() => import("./pages/public/ContactPage"));
 // Routes config
 import { PUBLIC_ROUTES, APP_ROUTES, LEGACY_ROUTES } from "./config/routes";
 import { useAppStore } from "./store/appStore";
-import { MigrationManager } from "./components/migration/MigrationManager";
 
 const WithAppLayout = ({ children }: { children: ReactNode }) => (
   <AppLayout>{children}</AppLayout>
@@ -69,7 +68,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <MigrationManager />
       <Suspense fallback={<div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>}>
         <Routes>
         {/* Public Routes */}
@@ -106,11 +104,19 @@ function App() {
         <Route path={APP_ROUTES.LOGIN} element={<AuthPage />} />
 
         {/* Legacy Redirects */}
+        <Route path={LEGACY_ROUTES.COURSES} element={<Navigate to={APP_ROUTES.COURSES} replace />} />
+        <Route path={LEGACY_ROUTES.PROFILE} element={<Navigate to={APP_ROUTES.PROFILE} replace />} />
         <Route path={LEGACY_ROUTES.ATTENDANCE} element={<Navigate to={APP_ROUTES.ATTENDANCE} replace />} />
         <Route path={LEGACY_ROUTES.ASSIGNMENTS} element={<Navigate to={APP_ROUTES.ASSIGNMENTS} replace />} />
         <Route path={LEGACY_ROUTES.HABITS} element={<Navigate to={APP_ROUTES.HABITS} replace />} />
+        <Route path={LEGACY_ROUTES.TODO} element={<Navigate to={APP_ROUTES.TODO} replace />} />
+        <Route path={LEGACY_ROUTES.CALENDAR} element={<Navigate to={APP_ROUTES.CALENDAR} replace />} />
         <Route path={LEGACY_ROUTES.POMODORO} element={<Navigate to={APP_ROUTES.POMODORO} replace />} />
+        <Route path={LEGACY_ROUTES.STUDY} element={<Navigate to={APP_ROUTES.STUDY} replace />} />
         <Route path={LEGACY_ROUTES.SETTINGS} element={<Navigate to={APP_ROUTES.SETTINGS} replace />} />
+
+        {/* Fallback Catch-all Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
     </BrowserRouter>

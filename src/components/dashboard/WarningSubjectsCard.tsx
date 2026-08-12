@@ -1,78 +1,60 @@
 import { useNavigate } from "react-router-dom";
 import { DashboardCard } from "./DashboardCard";
-import { StatusBadge } from "../attendance/StatusBadge";
 import { ProgressBar } from "../ui/ProgressBar";
-import { AttendanceStatus } from "../../types/attendanceStatus";
-import { calculateCurrentPercentage, calculateStatus, formatPercentage } from "../../utils/attendance";
-import type { Subject } from "../../types/subject";
+import { useDashboardAttendance } from "./hooks/useDashboardAttendance";
+import { APP_ROUTES } from "../../config/routes";
+import { AlertTriangle } from "lucide-react";
 
-interface WarningSubjectsCardProps {
-  subjects: Subject[];
-}
-
-const STATUS_ORDER: Record<AttendanceStatus, number> = {
-  [AttendanceStatus.IMPOSSIBLE]: 0,
-  [AttendanceStatus.CRITICAL]: 1,
-  [AttendanceStatus.WARNING]: 2,
-  [AttendanceStatus.SAFE]: 3,
-};
-
-/**
- * WarningSubjectsCard — shows top 3 subjects sorted by severity.
- * Reuses existing calculation utilities; owns zero business logic.
- */
-export function WarningSubjectsCard({ subjects }: WarningSubjectsCardProps) {
+export function WarningSubjectsCard() {
   const navigate = useNavigate();
+  const { subjects, subjectStats } = useDashboardAttendance();
 
-  const sorted = [...subjects]
-    .map((s) => ({
-      subject: s,
-      status: calculateStatus(s.targetAttendance ?? 75, s.totalClasses, s.attendedClasses),
-      percentage: calculateCurrentPercentage(s.attendedClasses, s.totalClasses),
-    }))
-    .filter(({ status }) => status !== AttendanceStatus.SAFE)
-    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
-    .slice(0, 3);
+  // Sort subjects by attendance percentage to find risk subjects (ascending, < 75%)
+  const riskSubjects = subjects
+    .map(sub => {
+      const stats = subjectStats[sub.id];
+      const attendancePercentage = stats?.attendancePercentage ?? 100;
+      return { ...sub, attendancePercentage };
+    })
+    .filter(sub => sub.attendancePercentage < 75)
+    .sort((a, b) => a.attendancePercentage - b.attendancePercentage);
 
-  if (sorted.length === 0) {
-    return (
-      <DashboardCard title="Subjects Needing Attention">
-        <div className="px-5 py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            All subjects are on track. Keep it up! 🎉
-          </p>
-        </div>
-      </DashboardCard>
-    );
+  if (riskSubjects.length === 0) {
+    return null; // Don't show if no warnings
   }
 
   return (
-    <DashboardCard title="Subjects Needing Attention">
+    <DashboardCard title="Attendance Warnings">
       <ul className="divide-y divide-border">
-        {sorted.map(({ subject, status, percentage }) => (
+        {riskSubjects.slice(0, 3).map((subject) => (
           <li
             key={subject.id}
-            className="flex flex-col gap-2 px-5 py-4 cursor-pointer hover:bg-accent transition-colors"
-            onClick={() => navigate("/attendance")}
+            className="flex flex-col gap-2 p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+            onClick={() => navigate(APP_ROUTES.ATTENDANCE)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && navigate("/attendance")}
+            onKeyDown={(e) => e.key === "Enter" && navigate(APP_ROUTES.ATTENDANCE)}
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-foreground truncate pr-2">
-                {subject.name}
-              </p>
-              <StatusBadge status={status} />
+              <div className="flex items-center gap-2 pr-2 overflow-hidden">
+                <AlertTriangle className="h-4 w-4 text-danger shrink-0" />
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {subject.name}
+                </p>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-danger bg-danger/10 px-2 py-0.5 rounded shrink-0">
+                Risk
+              </span>
             </div>
             <div className="flex items-center gap-3">
-              <ProgressBar percentage={percentage} className="flex-1" />
-              <p className="text-xs tabular-nums text-muted-foreground shrink-0">
-                {formatPercentage(percentage)}
+              <ProgressBar percentage={subject.attendancePercentage} className="flex-1 h-1.5 bg-danger/20" />
+              <p className="text-xs tabular-nums text-muted-foreground shrink-0 font-medium">
+                {Math.round(subject.attendancePercentage)}%
               </p>
             </div>
           </li>
         ))}
       </ul>
     </DashboardCard>
-  );
+  )
 }

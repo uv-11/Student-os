@@ -47,7 +47,7 @@ export function PublicNavbar() {
             to={APP_ROUTES.DASHBOARD}
             className="text-sm font-medium px-4 py-2 rounded-full bg-primary text-primary-foreground hover:scale-105 transition-transform active:scale-95 shadow-sm"
           >
-            Go to App
+            Open Workspace
           </Link>
         </div>
       </div>

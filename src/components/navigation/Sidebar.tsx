@@ -28,27 +28,24 @@ const ANALYTICS_ITEMS = [
   { name: "Study Insights", path: APP_ROUTES.ANALYTICS_STUDY, icon: BookOpen },
 ];
 
-export function Sidebar() {
+export function SidebarContent({ onClose }: { onClose?: () => void }) {
   const { isInstallable, promptInstall } = useInstallPrompt();
   const location = useLocation();
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-border bg-surface-sidebar md:flex shrink-0">
-      <div className="flex h-14 shrink-0 items-center px-6 border-b border-transparent">
-        <Logo />
-      </div>
-      
+    <>
       <div className="px-2 pt-2 pb-1 shrink-0">
         <WorkspaceSwitcher />
       </div>
 
-      <nav className="flex-1 space-y-1 px-4 py-2 overflow-y-auto relative">
+      <nav className="flex-1 space-y-1 px-4 py-2 overflow-y-auto hide-scrollbar relative">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={clsx(
                 "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
                 isActive
@@ -78,6 +75,7 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={clsx(
                 "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
                 isActive
@@ -99,9 +97,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 mt-auto flex flex-col gap-1 shrink-0">
+      <div className="p-4 mt-auto flex flex-col gap-1 shrink-0 pb-safe">
         <NavLink
           to={APP_ROUTES.SETTINGS}
+          onClick={onClose}
           className={clsx(
             "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 mb-2",
             location.pathname === APP_ROUTES.SETTINGS
@@ -122,7 +121,10 @@ export function Sidebar() {
 
         {isInstallable && (
           <button
-            onClick={promptInstall}
+            onClick={() => {
+              promptInstall();
+              onClose?.();
+            }}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 mb-2"
           >
             <Download className="h-4 w-4" />
@@ -133,6 +135,17 @@ export function Sidebar() {
           <UserProfileDropdown variant="sidebar" />
         </div>
       </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden w-64 flex-col border-r border-border bg-surface-sidebar md:flex shrink-0">
+      <div className="flex h-14 shrink-0 items-center px-6 border-b border-transparent">
+        <Logo />
+      </div>
+      <SidebarContent />
     </aside>
   );
 }

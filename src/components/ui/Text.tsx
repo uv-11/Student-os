@@ -1,4 +1,4 @@
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode, CSSProperties, ElementType } from "react";
 import { clsx } from "clsx";
 
 interface TextProps {
@@ -17,7 +17,7 @@ export function Text({ children, variant = "body", className, style }: TextProps
     muted: "text-sm text-slate-500 dark:text-slate-400",
   };
 
-  const Component = variant.startsWith("h") ? (variant as any) : "p";
+  const Component = variant.startsWith("h") ? (variant as ElementType) : "p";
 
   return (
     <Component className={clsx(baseClasses[variant], className)} style={style}>

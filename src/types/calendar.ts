@@ -1,4 +1,4 @@
-export type CalendarEventType = "assignment" | "task" | "pomodoro" | "study";
+export type CalendarEventType = "assignment" | "task" | "pomodoro" | "study" | "custom";
 
 export interface CalendarEvent {
   id: string;

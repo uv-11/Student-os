@@ -3,13 +3,16 @@ import { addMonths, subMonths, addWeeks, subWeeks, format } from "date-fns";
 import { Container } from "../../components/ui/Container";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Button } from "../../components/ui/Button";
-import { ChevronLeft, ChevronRight, LayoutGrid, List, LayoutTemplate } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, List, LayoutTemplate, Plus } from "lucide-react";
 import { clsx } from "clsx";
 
 import { useCalendarEvents } from "../../hooks/useCalendarEvents";
 import { MonthView } from "../../components/calendar/MonthView";
 import { WeekView } from "../../components/calendar/WeekView";
 import { AgendaView } from "../../components/calendar/AgendaView";
+import { EventForm } from "../../components/calendar/EventForm";
+import type { CalendarEvent } from "../../types/calendar";
+import type { StandaloneCalendarEvent } from "../../store/calendarStore";
 
 type ViewType = "month" | "week" | "agenda";
 
@@ -24,6 +27,22 @@ export default function CalendarPage() {
     return window.innerWidth < 640 ? "agenda" : "month";
   });
 
+  const [isAdding, setIsAdding] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("action") === "add";
+  });
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+
+  const handleCloseForm = () => {
+    if (isAdding) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState({}, "", url);
+    }
+    setIsAdding(false);
+    setEditingEvent(null);
+  };
+
   useEffect(() => {
     localStorage.setItem("studentos-calendar-view", view);
   }, [view]);
@@ -36,6 +55,7 @@ export default function CalendarPage() {
       setCurrentDate(subMonths(currentDate, 1));
     }
   };
+
 
   const handleNext = () => {
     if (view === "month") setCurrentDate(addMonths(currentDate, 1));
@@ -57,57 +77,66 @@ export default function CalendarPage() {
 
   return (
     <Container className="flex flex-col h-full overflow-hidden pb-4">
-      <PageHeader title="Calendar" description="Your academic timeline." className="shrink-0 mb-4" />
+      <PageHeader 
+        title="Calendar" 
+        description="Your academic timeline." 
+        className="shrink-0 mb-4" 
+        actions={
+          <Button onClick={() => setIsAdding(true)} className="hidden md:flex">
+            <Plus className="h-4 w-4 mr-2" /> Add Event
+          </Button>
+        }
+      />
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-foreground min-w-[200px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold text-foreground min-w-[180px] tracking-tight">
             {getHeaderLabel()}
           </h2>
           
-          <div className="flex items-center bg-card border rounded-lg p-0.5 shadow-sm">
-            <Button variant="ghost" size="sm" onClick={handlePrevious} className="px-2 h-8">
-              <ChevronLeft className="w-4 h-4" />
+          <div className="flex items-center bg-card border border-border rounded-md shadow-sm overflow-hidden">
+            <Button variant="ghost" size="sm" onClick={handlePrevious} className="px-2 h-7 rounded-none border-r border-border hover:bg-muted">
+              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleToday} className="px-3 h-8 text-xs font-semibold">
+            <Button variant="ghost" size="sm" onClick={handleToday} className="px-3 h-7 rounded-none border-r border-border text-[11px] font-bold uppercase tracking-wider hover:bg-muted text-muted-foreground">
               Today
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleNext} className="px-2 h-8">
-              <ChevronRight className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={handleNext} className="px-2 h-7 rounded-none hover:bg-muted">
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center bg-muted/50 p-1 rounded-xl">
+        <div className="flex items-center bg-muted/30 border border-border p-0.5 rounded-lg">
           <button
             onClick={() => setView("month")}
             className={clsx(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-              view === "month" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+              view === "month" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
             )}
           >
-            <LayoutGrid className="w-4 h-4" />
+            <LayoutGrid className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Month</span>
           </button>
           <button
             onClick={() => setView("week")}
             className={clsx(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-              view === "week" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+              view === "week" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
             )}
           >
-            <LayoutTemplate className="w-4 h-4" />
+            <LayoutTemplate className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Week</span>
           </button>
           <button
             onClick={() => setView("agenda")}
             className={clsx(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-              view === "agenda" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+              view === "agenda" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
             )}
           >
-            <List className="w-4 h-4" />
+            <List className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Agenda</span>
           </button>
         </div>
@@ -116,15 +145,34 @@ export default function CalendarPage() {
       {/* View Container */}
       <div className="flex-1 overflow-x-auto overflow-y-auto">
         <div className="min-w-[800px] h-full sm:min-w-0">
-          {view === "month" && <MonthView events={events} currentDate={currentDate} />}
-          {view === "week" && <WeekView events={events} currentDate={currentDate} />}
+          {view === "month" && <MonthView events={events} currentDate={currentDate} onEventClick={(e) => e.type === 'custom' && setEditingEvent(e)} />}
+          {view === "week" && <WeekView events={events} currentDate={currentDate} onEventClick={(e) => e.type === 'custom' && setEditingEvent(e)} />}
         </div>
         {view === "agenda" && (
           <div className="w-full h-full mt-2">
-             <AgendaView events={events} />
+             <AgendaView events={events} onEventClick={(e) => e.type === 'custom' && setEditingEvent(e)} />
           </div>
         )}
       </div>
+
+      {(isAdding || editingEvent) && (
+        <EventForm
+          initialData={editingEvent?.type === "custom" ? (editingEvent as unknown as StandaloneCalendarEvent) : undefined}
+          selectedDate={currentDate}
+          onClose={handleCloseForm}
+        />
+      )}
+
+      {/* Mobile FAB */}
+      {!isAdding && !editingEvent && (
+        <Button
+          onClick={() => setIsAdding(true)}
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg md:hidden flex items-center justify-center p-0 z-40"
+          aria-label="Add Event"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
     </Container>
   );
 }

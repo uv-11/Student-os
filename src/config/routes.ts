@@ -31,9 +31,14 @@ export const APP_ROUTES = {
 
 export const LEGACY_ROUTES = {
   DASHBOARD: "/",
+  COURSES: "/courses",
+  PROFILE: "/profile",
   ATTENDANCE: "/attendance",
   ASSIGNMENTS: "/assignments",
   HABITS: "/habits",
+  TODO: "/todo",
+  CALENDAR: "/calendar",
   POMODORO: "/pomodoro",
+  STUDY: "/study",
   SETTINGS: "/settings",
 } as const;

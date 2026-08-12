@@ -16,10 +16,10 @@ export function Header() {
         <div className="flex items-center gap-3 md:hidden">
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-colors"
+            className="flex items-center justify-center min-h-[44px] min-w-[44px] -ml-2 text-muted-foreground hover:text-foreground rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-colors"
             aria-label="Open Menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </button>
           <Logo />
         </div>
@@ -43,7 +43,7 @@ export function Header() {
           </button>
           
           <button
-            className="sm:hidden p-2 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+            className="sm:hidden flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
             onClick={() => {
               const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
               document.dispatchEvent(event);

@@ -15,14 +15,14 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   return (
-    <nav className="flex h-16 shrink-0 items-center justify-around border-t border-slate-200 bg-white px-2 pb-safe dark:border-slate-800 dark:bg-slate-900 md:hidden">
+    <nav className="flex h-16 shrink-0 items-center justify-start overflow-x-auto flex-nowrap snap-x hide-scrollbar border-t border-border bg-card px-2 pb-safe md:hidden">
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}
           className={({ isActive }) =>
             clsx(
-              "flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-1.5 min-w-[64px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
+              "flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-1.5 min-w-[64px] shrink-0 snap-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
               isActive
                 ? "text-muted-foreground"
                 : "text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"

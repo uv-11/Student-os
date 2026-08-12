@@ -2,9 +2,11 @@ import { useMemo } from "react";
 import { usePomodoroStore } from "../../store/pomodoroStore";
 import { format, subDays, startOfDay } from "date-fns";
 import { PomodoroMode } from "../../types/pomodoroMode";
+import { useNow } from "../useNow";
 
 export function usePomodoroAnalytics() {
   const { sessions } = usePomodoroStore();
+  const now = useNow();
 
   return useMemo(() => {
     if (sessions.length === 0) return null;
@@ -13,7 +15,7 @@ export function usePomodoroAnalytics() {
     const totalFocusMinutes = focusSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
     const totalFocusHours = totalFocusMinutes / 60;
 
-    const today = startOfDay(new Date());
+    const today = startOfDay(now);
     
     let todayMinutes = 0;
     let thisWeekMinutes = 0;
@@ -53,5 +55,5 @@ export function usePomodoroAnalytics() {
       sessionsCompleted: focusSessions.length,
       chartData,
     };
-  }, [sessions]);
+  }, [sessions, now]);
 }

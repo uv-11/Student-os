@@ -6,9 +6,6 @@ import {
   Palette, 
   Settings, 
   Command, 
-  Download, 
-  LogOut, 
-  LogIn,
   ChevronDown
 } from "lucide-react";
 import { useUserStore } from "../../store/userStore";
@@ -45,7 +42,7 @@ export function UserProfileDropdown({ variant = "header" }: { variant?: "header"
     {
       icon: <UserIcon className="w-4 h-4" />,
       label: "Profile",
-      subtitle: "Coming soon",
+      subtitle: profile.university || "Local profile",
       action: () => navigate("/profile"), // Will route to local profile edit
       disabled: false,
     },
@@ -70,15 +67,7 @@ export function UserProfileDropdown({ variant = "header" }: { variant?: "header"
         document.dispatchEvent(new Event('show-keyboard-shortcuts'));
         setIsOpen(false);
       },
-    },
-    {
-      icon: <Download className="w-4 h-4" />,
-      label: "Install App",
-      action: () => {
-        // PWA install trigger (if supported, handled elsewhere)
-        setIsOpen(false);
-      },
-    },
+    }
   ];
 
   return (
@@ -123,7 +112,7 @@ export function UserProfileDropdown({ variant = "header" }: { variant?: "header"
             exit={{ opacity: 0, y: variant === "header" ? 4 : -4, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             className={clsx(
-              "absolute mt-2 w-64 rounded-2xl border dark:border-border border-border-strong bg-card/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50",
+              "absolute mt-2 w-64 rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50",
               variant === "header" ? "right-0 origin-top-right" : "left-0 bottom-full mb-2 origin-bottom-left"
             )}
           >
@@ -164,27 +153,12 @@ export function UserProfileDropdown({ variant = "header" }: { variant?: "header"
               ))}
 
               <div className="h-px bg-border/50 my-1 mx-2" />
-
-              {profile.isGuest ? (
-                <button
-                  className="flex items-center gap-3 w-full p-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors text-left"
-                  onClick={() => {
-                    setIsOpen(false);
-                    navigate(APP_ROUTES.LOGIN);
-                  }}
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In</span>
-                </button>
-              ) : (
-                <button
-                  className="flex items-center gap-3 w-full p-2 rounded-lg text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Log Out</span>
-                </button>
-              )}
+              
+              <div className="px-3 py-2 mt-1">
+                <div className="flex items-center justify-center w-full py-1.5 px-2 bg-primary/10 text-primary rounded-lg text-xs font-semibold uppercase tracking-wide">
+                  Local Workspace
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

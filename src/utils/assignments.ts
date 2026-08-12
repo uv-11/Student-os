@@ -61,7 +61,7 @@ export function timestampToDateInput(ts?: number): string {
 
 // ─── Priority Helpers ────────────────────────────────────────────────────────
 
-export function getPriorityOrder(priority: AssignmentPriority): number {
+function getPriorityOrder(priority: AssignmentPriority): number {
   const order: Record<AssignmentPriority, number> = {
     [AssignmentPriority.URGENT]: 0,
     [AssignmentPriority.HIGH]: 1,

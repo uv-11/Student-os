@@ -16,8 +16,22 @@ import type { Assignment } from "../../types/assignment";
 export default function AssignmentsPage() {
   const { assignments, deleteAssignment, restoreAssignment } = useAssignmentStore();
 
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAdding, setIsAdding] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("action") === "add";
+  });
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+
+  // Clear query param when closing form so it doesn't reopen on refresh
+  const handleCloseForm = () => {
+    if (isAdding) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState({}, "", url);
+    }
+    setIsAdding(false);
+    setEditingAssignment(null);
+  };
 
   // Toolbar state — default to "ACTIVE" so Done items are hidden initially
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,10 +48,7 @@ export default function AssignmentsPage() {
     setEditingAssignment(assignment);
   };
 
-  const handleCloseForm = () => {
-    setIsAdding(false);
-    setEditingAssignment(null);
-  };
+  // handleCloseForm moved above
 
   const handleDelete = (assignmentId: string) => {
     const target = assignments.find((a) => a.id === assignmentId);

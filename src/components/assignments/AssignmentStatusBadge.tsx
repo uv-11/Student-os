@@ -18,19 +18,24 @@ const STATUS_STYLES: Record<AssignmentStatus, string> = {
 
 interface AssignmentStatusBadgeProps {
   status: AssignmentStatus;
+  isOverdue?: boolean;
   className?: string;
 }
 
-export function AssignmentStatusBadge({ status, className }: AssignmentStatusBadgeProps) {
+export function AssignmentStatusBadge({ status, isOverdue, className }: AssignmentStatusBadgeProps) {
+  const isActuallyOverdue = isOverdue && status !== AssignmentStatus.DONE;
+  
   return (
     <span
       className={clsx(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border",
-        STATUS_STYLES[status],
+        isActuallyOverdue
+          ? "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+          : STATUS_STYLES[status],
         className
       )}
     >
-      {STATUS_LABELS[status]}
+      {isActuallyOverdue ? "Overdue" : STATUS_LABELS[status]}
     </span>
   );
 }

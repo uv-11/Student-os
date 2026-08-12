@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, BookOpen, Tag, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { Clock, BookOpen, MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { StudySession } from "../../types/study";
 import { useState } from "react";
@@ -63,24 +63,25 @@ export function StudySessionCard({ session, onEdit, onDelete }: StudySessionCard
         </p>
       )}
 
-      <div className="flex items-center justify-between mt-auto">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded-md">
-          <Clock className="h-3.5 w-3.5" />
-          {session.durationMinutes} min
-        </div>
-
-        {session.tags && session.tags.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-            <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[150px]">
-              {session.tags.map((tag, i) => (
-                <span key={i} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
+      <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md">
+            <Clock className="h-3.5 w-3.5" />
+            {session.durationMinutes} min
+          </div>
+          {session.tags && session.tags.length > 0 && (
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[120px]">
+              {session.tags.slice(0, 2).map((tag, i) => (
+                <span key={i} className="text-[10px] bg-muted/50 border border-border text-muted-foreground font-semibold px-1.5 py-0.5 rounded whitespace-nowrap">
                   {tag}
                 </span>
               ))}
+              {session.tags.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{session.tags.length - 2}</span>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Invisible backdrop for menu */}

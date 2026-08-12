@@ -19,7 +19,7 @@ export function useHabitAnalytics() {
       // Basic streak calculation (Current and Longest)
       let currentStreak = 0;
       let longestStreak = 0;
-      let tempStreak = 0;
+      let tempStreak: number;
 
       // Sort logs descending
       const logs = [...habit.completionLog].sort((a, b) => b.localeCompare(a));

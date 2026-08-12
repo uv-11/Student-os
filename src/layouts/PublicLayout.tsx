@@ -5,7 +5,7 @@ import { PageTransition } from "../components/layout/PageTransition";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-muted-foreground selection:bg-primary/20 dark:selection:bg-primary/20 font-sans">
+    <div className="min-h-[100dvh] flex flex-col bg-background text-muted-foreground selection:bg-primary/20 dark:selection:bg-primary/20 font-sans">
       <PublicNavbar />
       <main className="flex-1 flex flex-col">
         <PageTransition>

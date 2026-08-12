@@ -1,13 +1,8 @@
 import { PomodoroMode } from "../../types/pomodoroMode";
 import { formatTime } from "../../utils/pomodoro";
 
-const RADIUS = 80;
+const RADIUS = 110;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
-const MODE_COLORS: Record<PomodoroMode, string> = {
-  [PomodoroMode.FOCUS]: "#3b82f6",  // blue-500
-  [PomodoroMode.BREAK]: "#10b981",  // emerald-500
-};
 
 const MODE_LABELS: Record<PomodoroMode, string> = {
   [PomodoroMode.FOCUS]: "Focus",
@@ -27,48 +22,44 @@ interface TimerRingProps {
 export function TimerRing({ timeRemaining, sessionTotal, mode }: TimerRingProps) {
   const progress = sessionTotal > 0 ? timeRemaining / sessionTotal : 1;
   const dashOffset = CIRCUMFERENCE * (1 - progress);
-  const color = MODE_COLORS[mode];
 
   return (
-    <div className="relative flex items-center justify-center select-none" aria-label={`${MODE_LABELS[mode]} timer: ${formatTime(timeRemaining)} remaining`}>
+    <div className="relative flex items-center justify-center select-none w-full max-w-[320px] aspect-square" aria-label={`${MODE_LABELS[mode]} timer: ${formatTime(timeRemaining)} remaining`}>
       <svg
-        width="220"
-        height="220"
-        viewBox="0 0 200 200"
-        className="-rotate-90"
+        width="100%"
+        height="100%"
+        viewBox="0 0 240 240"
+        className="-rotate-90 drop-shadow-sm"
         aria-hidden="true"
       >
         {/* Track */}
         <circle
-          cx="100"
-          cy="100"
+          cx="120"
+          cy="120"
           r={RADIUS}
           fill="none"
-          className="stroke-slate-100 dark:stroke-slate-800"
-          strokeWidth="10"
+          className="stroke-muted/30"
+          strokeWidth="4"
         />
         {/* Progress arc */}
         <circle
-          cx="100"
-          cy="100"
+          cx="120"
+          cy="120"
           r={RADIUS}
           fill="none"
-          stroke={color}
-          strokeWidth="10"
+          className={mode === PomodoroMode.FOCUS ? "stroke-primary" : "stroke-muted-foreground"}
+          strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={dashOffset}
-          style={{ transition: "stroke-dashoffset 0.9s linear" }}
+          style={{ transition: "stroke-dashoffset 1s linear" }}
         />
       </svg>
 
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-        <span className="text-5xl font-semibold tabular-nums tracking-tight text-muted-foreground">
+        <span className="text-[clamp(3.5rem,15vw,6rem)] font-bold tabular-nums tracking-tighter text-foreground leading-none">
           {formatTime(timeRemaining)}
-        </span>
-        <span className="text-sm font-medium text-muted-foreground">
-          {MODE_LABELS[mode]}
         </span>
       </div>
     </div>

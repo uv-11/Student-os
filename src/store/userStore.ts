@@ -29,6 +29,11 @@ const DEFAULT_GUEST_PROFILE: UserProfile = {
   subtitle: "Built by students",
   avatarColor: "violet",
   isGuest: true,
+  university: "My University",
+  degree: "B.Tech",
+  branch: "Computer Science",
+  semester: "Semester 1",
+  targetAttendance: 75,
 };
 
 const DEFAULT_WORKSPACES: Workspace[] = [

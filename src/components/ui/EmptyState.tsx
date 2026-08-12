@@ -1,10 +1,11 @@
 import { forwardRef } from "react";
-import type { HTMLAttributes, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { clsx } from "clsx";
 import { Text } from "./Text";
 import { motion } from "framer-motion";
+import type { HTMLMotionProps } from "framer-motion";
 
-interface EmptyStateProps extends HTMLAttributes<HTMLDivElement> {
+export type EmptyStateProps = HTMLMotionProps<"div"> & {
   icon: ReactNode;
   title: string;
   description: string;
@@ -17,12 +18,12 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      ref={ref as any}
+      ref={ref}
       className={clsx(
         "flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-sm",
         className
       )}
-      {...(props as any)}
+      {...props}
     >
       <motion.div 
         animate={{ y: [-3, 3] }}

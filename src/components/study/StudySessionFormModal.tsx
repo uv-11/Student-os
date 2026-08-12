@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Clock, BookOpen, Tag as TagIcon, AlignLeft } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -23,25 +23,33 @@ export function StudySessionFormModal({ isOpen, onClose, onSave, sessionToEdit }
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
 
-  useEffect(() => {
-    if (sessionToEdit) {
-      setTitle(sessionToEdit.title);
-      setCourseId(sessionToEdit.courseId || "");
-      setCourseNameFallback(sessionToEdit.course || "");
-      setDuration(sessionToEdit.durationMinutes.toString());
-      setDate(format(sessionToEdit.date, "yyyy-MM-dd"));
-      setTags(sessionToEdit.tags.join(", "));
-      setNotes(sessionToEdit.notes || "");
-    } else {
-      setTitle("");
-      setCourseId("");
-      setCourseNameFallback("");
-      setDuration("60");
-      setDate(format(new Date(), "yyyy-MM-dd"));
-      setTags("");
-      setNotes("");
+  const [prevSession, setPrevSession] = useState(sessionToEdit);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (sessionToEdit !== prevSession || isOpen !== prevIsOpen) {
+    setPrevSession(sessionToEdit);
+    setPrevIsOpen(isOpen);
+    
+    if (isOpen) {
+      if (sessionToEdit) {
+        setTitle(sessionToEdit.title);
+        setCourseId(sessionToEdit.courseId || "");
+        setCourseNameFallback(sessionToEdit.course || "");
+        setDuration(sessionToEdit.durationMinutes.toString());
+        setDate(format(sessionToEdit.date, "yyyy-MM-dd"));
+        setTags(sessionToEdit.tags.join(", "));
+        setNotes(sessionToEdit.notes || "");
+      } else {
+        setTitle("");
+        setCourseId("");
+        setCourseNameFallback("");
+        setDuration("60");
+        setDate(format(new Date(), "yyyy-MM-dd"));
+        setTags("");
+        setNotes("");
+      }
     }
-  }, [sessionToEdit, isOpen]);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,16 +78,16 @@ export function StudySessionFormModal({ isOpen, onClose, onSave, sessionToEdit }
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden"
+          className="bg-card w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl shadow-xl border border-border overflow-hidden"
         >
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex shrink-0 items-center justify-between p-4 border-b border-border">
             <h2 className="text-lg font-semibold">{sessionToEdit ? "Edit Session" : "Log Study Session"}</h2>
             <button onClick={onClose} className="p-2 text-muted-foreground hover:bg-muted rounded-full">
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1">
             <div>
               <label className="block text-sm font-medium mb-1">Session Title</label>
               <input

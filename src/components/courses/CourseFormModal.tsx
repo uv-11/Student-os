@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, BookOpen, User, Star, AlignLeft, Palette } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -18,21 +18,29 @@ export function CourseFormModal({ isOpen, onClose, onSave, courseToEdit }: Cours
   const [color, setColor] = useState("#8b5cf6");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    if (courseToEdit) {
-      setName(courseToEdit.name);
-      setType(courseToEdit.type);
-      setEmoji(courseToEdit.emoji || "📚");
-      setColor(courseToEdit.color || "#8b5cf6");
-      setDescription(courseToEdit.description || "");
-    } else {
-      setName("");
-      setType("academic");
-      setEmoji("📚");
-      setColor("#8b5cf6");
-      setDescription("");
+  const [prevCourse, setPrevCourse] = useState(courseToEdit);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (courseToEdit !== prevCourse || isOpen !== prevIsOpen) {
+    setPrevCourse(courseToEdit);
+    setPrevIsOpen(isOpen);
+    
+    if (isOpen) {
+      if (courseToEdit) {
+        setName(courseToEdit.name);
+        setType(courseToEdit.type);
+        setEmoji(courseToEdit.emoji || "📚");
+        setColor(courseToEdit.color || "#8b5cf6");
+        setDescription(courseToEdit.description || "");
+      } else {
+        setName("");
+        setType("academic");
+        setEmoji("📚");
+        setColor("#8b5cf6");
+        setDescription("");
+      }
     }
-  }, [courseToEdit, isOpen]);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,16 +65,16 @@ export function CourseFormModal({ isOpen, onClose, onSave, courseToEdit }: Cours
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden"
+          className="bg-card w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl shadow-xl border border-border overflow-hidden"
         >
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex shrink-0 items-center justify-between p-4 border-b border-border">
             <h2 className="text-lg font-semibold">{courseToEdit ? "Edit Course" : "New Course"}</h2>
             <button onClick={onClose} className="p-2 text-muted-foreground hover:bg-muted rounded-full">
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1">
             <div>
               <label className="block text-sm font-medium mb-1">Course Name</label>
               <input

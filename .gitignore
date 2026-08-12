@@ -7,10 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environments
+.env
+.env.local
+.env.*.local
+
 node_modules
 dist
 dist-ssr
+build
+coverage
 *.local
+
+# Local StudentOS Backups
+studentos-backup-*.json
 
 # Editor directories and files
 .vscode/*

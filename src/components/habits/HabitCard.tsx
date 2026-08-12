@@ -3,7 +3,6 @@ import { Edit2, Trash2, Flame, Trophy } from "lucide-react";
 import { clsx } from "clsx";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
-import { Text } from "../ui/Text";
 import { useHabitStore } from "../../store/habitStore";
 import {
   getCurrentStreak,
@@ -79,75 +78,85 @@ export function HabitCard({ habit, onEdit, onDeleteOverride }: HabitCardProps) {
 
   return (
     <Card
-      className={clsx("p-5 flex flex-col gap-4", habit.color && "border-l-4")}
+      className={clsx("p-3 sm:p-4 flex flex-col gap-3 transition-all border border-border hover:shadow-md", todayDone && "opacity-60", habit.color && "border-l-4")}
       style={accentStyle}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          {habit.icon && <span className="text-xl shrink-0">{habit.icon}</span>}
-          <div className="min-w-0">
-            <Text variant="h3" className="truncate">{habit.name}</Text>
-            {habit.description && (
-              <Text variant="muted" className="text-xs mt-0.5 line-clamp-1">{habit.description}</Text>
+      <div className="flex items-start gap-3 justify-between">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          {/* Completion Toggle (One-Tap) */}
+          <button
+            onClick={() => toggleCompletion(habit.id, getTodayString())}
+            aria-label={todayDone ? "Undo completion" : "Mark done"}
+            className={clsx(
+              "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 flex items-center justify-center",
+              todayDone
+                ? "border-primary bg-primary"
+                : "border-muted-foreground/30 hover:border-primary/50 bg-transparent"
             )}
+          >
+            {todayDone && (
+              <svg viewBox="0 0 12 12" className="h-3 w-3 text-primary-foreground" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+          
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              {habit.icon && <span className="text-base leading-none shrink-0">{habit.icon}</span>}
+              <h4 className={clsx("text-sm font-bold text-foreground leading-tight truncate", todayDone && "line-through text-muted-foreground")}>
+                {habit.name}
+              </h4>
+            </div>
+            {habit.description && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 opacity-80">{habit.description}</p>
+            )}
+            
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1 text-orange-500/90 dark:text-orange-400/90">
+                <Flame className="h-3.5 w-3.5" />
+                <span className="font-semibold">{streak}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5" />
+                <span className="font-semibold">{longest}</span>
+              </div>
+              <div className="font-medium">
+                {pct}% (30d)
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Actions / Delete Confirm */}
         {isConfirmingDelete ? (
-          <div className="flex items-center gap-1 shrink-0 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md border border-red-200 dark:border-red-800">
-            <span className="text-xs font-semibold text-red-700 dark:text-red-400 whitespace-nowrap">Delete?</span>
-            <Button variant="ghost" size="sm" onClick={handleDelete} className="h-6 px-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900">Yes</Button>
-            <Button variant="ghost" size="sm" onClick={() => setIsConfirmingDelete(false)} className="h-6 px-1.5 hover:bg-accent">No</Button>
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0 bg-destructive/10 px-2 py-1 rounded-md border border-destructive/20">
+            <span className="text-xs font-semibold text-destructive whitespace-nowrap hidden sm:inline-block">Delete?</span>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={handleDelete} className="h-6 px-1.5 text-destructive hover:bg-destructive/20">Yes</Button>
+              <Button variant="ghost" size="sm" onClick={() => setIsConfirmingDelete(false)} className="h-6 px-1.5 hover:bg-muted">No</Button>
+            </div>
           </div>
         ) : (
-          <div className="flex gap-1 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => onEdit(habit)} aria-label="Edit habit">
-              <Edit2 className="h-4 w-4" />
+          <div className="flex gap-0.5 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => onEdit(habit)} aria-label="Edit habit" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted">
+              <Edit2 className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleDelete} aria-label="Delete habit">
-              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+            <Button variant="ghost" size="sm" onClick={handleDelete} aria-label="Delete habit" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="flex items-center gap-4 text-sm">
-        <div className="flex items-center gap-1 text-orange-500 dark:text-orange-400">
-          <Flame className="h-4 w-4" />
-          <span className="font-semibold tabular-nums">{streak}</span>
-          <span className="text-xs text-muted-foreground">streak</span>
-        </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Trophy className="h-4 w-4" />
-          <span className="font-semibold tabular-nums">{longest}</span>
-          <span className="text-xs text-muted-foreground">best</span>
-        </div>
-        <div className="ml-auto text-xs text-muted-foreground tabular-nums font-medium">
-          {pct}% last 30d
-        </div>
-      </div>
-
       {/* 7-day strip */}
-      <SevenDayStrip statuses={statuses} />
-
-      {/* Completion actions */}
-      <div className="flex gap-2 pt-2 border-t border-border">
+      <div className="pt-2 sm:pt-0 sm:pl-8 flex justify-between items-end gap-2 mt-auto">
+        <SevenDayStrip statuses={statuses} />
         <Button
-          variant={todayDone ? "secondary" : "primary"}
-          className={clsx("flex-1 text-sm", todayDone && "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border-0")}
-          onClick={() => toggleCompletion(habit.id, getTodayString())}
-          aria-pressed={todayDone}
-        >
-          {todayDone ? "✓ Done Today" : "Mark Done"}
-        </Button>
-        <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className={clsx("text-xs shrink-0", yesterdayDone && "opacity-60")}
+          className={clsx("h-6 px-2 text-[10px] font-semibold tracking-wide uppercase", yesterdayDone ? "text-primary hover:text-primary/80" : "text-muted-foreground hover:text-foreground hover:bg-muted")}
           onClick={() => toggleCompletion(habit.id, getYesterdayString())}
-          aria-pressed={yesterdayDone}
           title={yesterdayDone ? "Undo yesterday" : "Mark yesterday as done"}
         >
           {yesterdayDone ? "✓ Yesterday" : "Yesterday"}
