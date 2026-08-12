@@ -67,7 +67,7 @@ function App() {
   }, [theme]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>}>
         <Routes>
         {/* Public Routes */}

@@ -84,7 +84,7 @@ export function BackgroundVideo() {
     <div className="fixed inset-0 z-[-10] w-full h-full overflow-hidden bg-background pointer-events-none">
       <video
         ref={lightVideoRef}
-        src="/bg/light.mp4"
+        src={`${import.meta.env.BASE_URL}bg/light.mp4`}
         loop
         muted
         playsInline
@@ -94,7 +94,7 @@ export function BackgroundVideo() {
       />
       <video
         ref={darkVideoRef}
-        src="/bg/dark.mp4"
+        src={`${import.meta.env.BASE_URL}bg/dark.mp4`}
         loop
         muted
         playsInline
