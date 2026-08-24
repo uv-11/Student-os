@@ -39,8 +39,53 @@ export const indexedDBAdapter: StorageAdapter = {
 };
 
 /**
- * Current Active Storage Adapter
- * Maintained as LocalStorage for Phase 1 compatibility.
- * We will switch this to migrationAdapter when ready.
+ * Safe Migration Adapter (Phase 1)
+ * Idempotent, lazy, non-destructive migration from localStorage to IndexedDB.
  */
-export const activeStorageAdapter: StorageAdapter = localStorageAdapter;
+export const activeStorageAdapter: StorageAdapter = {
+  getItem: async (name) => {
+    try {
+      // 1. Try to read from IndexedDB first (authoritative source post-migration)
+      let idbValue = await indexedDBAdapter.getItem(name);
+      
+      // 2. Read from LocalStorage (legacy source)
+      const lsValue = await localStorageAdapter.getItem(name);
+
+      // 3. Migration required if data exists in LS but not in IDB
+      if (lsValue && !idbValue) {
+        try {
+          await indexedDBAdapter.setItem(name, lsValue);
+          
+          // Verify integrity
+          const verifiedValue = await indexedDBAdapter.getItem(name);
+          if (verifiedValue === lsValue) {
+            console.log(`[Storage] Successfully migrated ${name} to IndexedDB`);
+            idbValue = verifiedValue;
+            // NOTE: We intentionally DO NOT delete from localStorage immediately.
+            // Preserving original data as a recovery fallback until completely stable.
+          } else {
+            console.error(`[Storage] Verification failed for ${name} during migration.`);
+            return lsValue; // Safe fallback
+          }
+        } catch (e) {
+          console.error(`[Storage] Migration failed for ${name}`, e);
+          return lsValue; // Safe fallback, do not destroy data
+        }
+      }
+
+      return idbValue || lsValue;
+    } catch (e) {
+      console.error(`[Storage] Error reading from storage for ${name}`, e);
+      return await localStorageAdapter.getItem(name); // Last resort fallback
+    }
+  },
+  setItem: async (name, value) => {
+    // Write new data exclusively to IndexedDB
+    await indexedDBAdapter.setItem(name, value);
+  },
+  removeItem: async (name) => {
+    await indexedDBAdapter.removeItem(name);
+    // Best effort cleanup in LS just in case
+    await localStorageAdapter.removeItem(name);
+  }
+};

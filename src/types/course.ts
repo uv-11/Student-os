@@ -11,6 +11,8 @@ export interface Course {
   updatedAt: number;
 
   // Future Compatibility Fields
+  code?: string;
+  targetAttendancePercentage?: number;
   credits?: number;
   semester?: string;
   section?: string;

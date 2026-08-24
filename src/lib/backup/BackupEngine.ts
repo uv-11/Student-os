@@ -13,6 +13,7 @@ import type { BackupEnvelope, RestoreResult } from "./types";
 import { validateAssignment, validateHabit, sanitizeString } from "../../utils/importValidator";
 import type { Assignment } from "../../types/assignment";
 import type { Habit } from "../../types/habit";
+import { MigrationEngine } from "../migrations/MigrationEngine";
 
 export class BackupEngine {
   public static readonly CURRENT_SCHEMA_VERSION = "2.1";
@@ -53,6 +54,29 @@ export class BackupEngine {
   }
 
   /**
+   * Restores a snapshot in case of failure.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static rollbackToSnapshot(data: any) {
+    try {
+      attendanceStore.setState(data.attendance);
+      useAssignmentStore.setState({ assignments: data.assignments });
+      useHabitStore.setState({ habits: data.habits });
+      usePomodoroStore.setState({ sessions: data.pomodoro.sessions });
+      usePomodoroStore.getState().updateSettings(data.pomodoro.settings);
+      useStudyStore.setState({ sessions: data.study });
+      useCalendarStore.setState({ events: data.calendar });
+      useCourseStore.setState({ courses: data.courses });
+      useTodoStore.setState({ todos: data.todos });
+      useUserStore.getState().updateProfile(data.user.profile);
+      useUserStore.getState().reorderWorkspaces(data.user.workspaces);
+      useAppStore.getState().updateSettings(data.appSettings);
+    } catch (e) {
+      console.error("FATAL: Rollback failed.", e);
+    }
+  }
+
+  /**
    * Orchestrates the safe staging and validation of a backup before committing
    * it to the live application state.
    */
@@ -64,6 +88,9 @@ export class BackupEngine {
       errors: [],
       skippedEntities: 0,
     };
+
+    // 1. PRE-RESTORE SNAPSHOT for atomic rollback
+    const preRestoreSnapshot = this.createSnapshot();
 
     try {
       if (!envelope) {
@@ -91,133 +118,135 @@ export class BackupEngine {
         }
       }
 
-      // We only support schema version >= 2.0 right now
       if (metadata.schemaVersion !== "2.1" && metadata.schemaVersion !== "2.0") {
         throw new Error(`Unsupported schema version: ${metadata.schemaVersion}`);
       }
 
-      // Begin Domain Restorations Safely
-      
-      // 1. Restore Attendance (Whole domain replacement with safe mapping)
+      // 2. BUILD AND VALIDATE NEXT STATE IN MEMORY
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nextState: any = {};
+
       if (data.attendance && typeof data.attendance === "object") {
-        try {
-          const safeAttendance = {
-            semesters: data.attendance.semesters || {},
-            subjects: data.attendance.subjects || {},
-            timetableVersions: data.attendance.timetableVersions || {},
-            timetableSlots: data.attendance.timetableSlots || {},
-            calendarEvents: data.attendance.calendarEvents || {},
-            scheduleOverrides: data.attendance.scheduleOverrides || {},
-            attendanceRecords: data.attendance.attendanceRecords || {}
-          };
-          attendanceStore.setState(safeAttendance);
-          result.importedCount++;
-        } catch {
-          result.errors.push("Failed to restore attendance data.");
-        }
+        nextState.attendance = {
+          semesters: data.attendance.semesters || {},
+          subjects: data.attendance.subjects || {},
+          timetableVersions: data.attendance.timetableVersions || {},
+          timetableSlots: data.attendance.timetableSlots || {},
+          calendarEvents: data.attendance.calendarEvents || {},
+          scheduleOverrides: data.attendance.scheduleOverrides || {},
+          attendanceRecords: data.attendance.attendanceRecords || {}
+        };
       }
 
-      // 2. Restore Assignments (Entity level validation)
       if (Array.isArray(data.assignments)) {
         const validAssignments = data.assignments.filter(validateAssignment);
         result.skippedEntities += (data.assignments.length - validAssignments.length);
-
         if (validAssignments.length > 0 || data.assignments.length === 0) {
-          const cleanAssignments = validAssignments.map((a: Assignment) => ({
+          nextState.assignments = validAssignments.map((a: Assignment) => ({
             ...a,
             title: sanitizeString(a.title, 200),
             description: a.description ? sanitizeString(a.description, 2000) : undefined,
           }));
-          useAssignmentStore.setState({ assignments: cleanAssignments });
-          result.importedCount += validAssignments.length;
         }
       }
 
-      // 3. Restore Habits (Entity level validation)
       if (Array.isArray(data.habits)) {
         const validHabits = data.habits.filter(validateHabit);
         result.skippedEntities += (data.habits.length - validHabits.length);
-
         if (validHabits.length > 0 || data.habits.length === 0) {
-          const cleanHabits = validHabits.map((h: Habit) => ({
+          nextState.habits = validHabits.map((h: Habit) => ({
             ...h,
             name: sanitizeString(h.name, 100),
             description: h.description ? sanitizeString(h.description, 1000) : undefined,
           }));
-          useHabitStore.setState({ habits: cleanHabits });
-          result.importedCount += validHabits.length;
         }
       }
 
-      // 4. Restore Pomodoro Sessions & Settings
       if (data.pomodoro && typeof data.pomodoro === "object") {
+        nextState.pomodoro = {};
         if (Array.isArray(data.pomodoro)) {
-          usePomodoroStore.setState({ sessions: data.pomodoro, activeTimer: null });
-          result.importedCount += data.pomodoro.length;
+          nextState.pomodoro.sessions = data.pomodoro;
         } else {
-          // Object format (v2.1+)
-          if (Array.isArray(data.pomodoro.sessions)) {
-            usePomodoroStore.setState({ sessions: data.pomodoro.sessions, activeTimer: null });
-            result.importedCount += data.pomodoro.sessions.length;
-          }
-          if (data.pomodoro.settings) {
-            usePomodoroStore.getState().updateSettings(data.pomodoro.settings);
-          }
+          if (Array.isArray(data.pomodoro.sessions)) nextState.pomodoro.sessions = data.pomodoro.sessions;
+          if (data.pomodoro.settings) nextState.pomodoro.settings = data.pomodoro.settings;
         }
       }
 
-      // 5. Restore Study Sessions
-      if (Array.isArray(data.study)) {
-        useStudyStore.setState({ sessions: data.study, activeSession: null }); // activeSession is transient, clear it
-        result.importedCount += data.study.length;
-      }
+      if (Array.isArray(data.study)) nextState.study = data.study;
+      if (Array.isArray(data.calendar)) nextState.calendar = data.calendar;
+      if (Array.isArray(data.courses)) nextState.courses = data.courses;
+      if (Array.isArray(data.todos)) nextState.todos = data.todos;
+      if (data.user && typeof data.user === "object") nextState.user = data.user;
+      if (data.appSettings && typeof data.appSettings === "object") nextState.appSettings = data.appSettings;
 
-      // 6. Restore Calendar Events
-      if (Array.isArray(data.calendar)) {
-        useCalendarStore.setState({ events: data.calendar });
-        result.importedCount += data.calendar.length;
+      // 3. ATOMIC COMMIT TO LIVE STORES
+      if (nextState.attendance) {
+        attendanceStore.setState(nextState.attendance);
+        result.importedCount++;
       }
-
-      // 7. Restore Courses
-      if (Array.isArray(data.courses)) {
-        useCourseStore.setState({ courses: data.courses, lastDeletedCourse: null });
-        result.importedCount += data.courses.length;
+      if (nextState.assignments) {
+        useAssignmentStore.setState({ assignments: nextState.assignments });
+        result.importedCount += nextState.assignments.length;
       }
-
-      // 8. Restore Todos
-      if (Array.isArray(data.todos)) {
-        useTodoStore.setState({ todos: data.todos, lastDeletedTodo: null });
-        result.importedCount += data.todos.length;
+      if (nextState.habits) {
+        useHabitStore.setState({ habits: nextState.habits });
+        result.importedCount += nextState.habits.length;
       }
-
-      // 9. Restore User Profile & Workspaces
-      if (data.user && typeof data.user === "object") {
-        if (data.user.profile) {
-          useUserStore.getState().updateProfile(data.user.profile);
+      if (nextState.pomodoro) {
+        if (nextState.pomodoro.sessions) {
+          usePomodoroStore.setState({ sessions: nextState.pomodoro.sessions, activeTimer: null });
+          result.importedCount += nextState.pomodoro.sessions.length;
+        }
+        if (nextState.pomodoro.settings) {
+          usePomodoroStore.getState().updateSettings(nextState.pomodoro.settings);
+        }
+      }
+      if (nextState.study) {
+        useStudyStore.setState({ sessions: nextState.study, activeSession: null });
+        result.importedCount += nextState.study.length;
+      }
+      if (nextState.calendar) {
+        useCalendarStore.setState({ events: nextState.calendar });
+        result.importedCount += nextState.calendar.length;
+      }
+      if (nextState.courses) {
+        useCourseStore.setState({ courses: nextState.courses, lastDeletedCourse: null });
+        result.importedCount += nextState.courses.length;
+      }
+      if (nextState.todos) {
+        useTodoStore.setState({ todos: nextState.todos, lastDeletedTodo: null });
+        result.importedCount += nextState.todos.length;
+      }
+      if (nextState.user) {
+        if (nextState.user.profile) {
+          useUserStore.getState().updateProfile(nextState.user.profile);
           result.importedCount++;
         }
-        if (Array.isArray(data.user.workspaces) && data.user.workspaces.length > 0) {
-           useUserStore.getState().reorderWorkspaces(data.user.workspaces);
-           // Fallback active workspace if the current active one is missing
+        if (Array.isArray(nextState.user.workspaces) && nextState.user.workspaces.length > 0) {
+           useUserStore.getState().reorderWorkspaces(nextState.user.workspaces);
            const currentActiveId = useUserStore.getState().activeWorkspaceId;
-           const exists = data.user.workspaces.some((ws: Record<string, unknown>) => ws.id === currentActiveId);
+           const exists = nextState.user.workspaces.some((ws: Record<string, unknown>) => ws.id === currentActiveId);
            if (!exists) {
-             useUserStore.getState().setActiveWorkspace(data.user.workspaces[0].id);
+             useUserStore.getState().setActiveWorkspace(nextState.user.workspaces[0].id);
            }
            result.importedCount++;
         }
       }
-
-      // 10. Restore App Settings (User Preferences)
-      if (data.appSettings && typeof data.appSettings === "object") {
-        useAppStore.getState().updateSettings(data.appSettings);
+      if (nextState.appSettings) {
+        useAppStore.getState().updateSettings(nextState.appSettings);
         result.importedCount++;
       }
+
+      // 4. RUN MIGRATIONS
+      await MigrationEngine.runMigrations();
 
       result.success = true;
       return result;
 
     } catch (e) {
+      console.warn("Restore failed, rolling back to pre-restore snapshot.", e);
+      this.rollbackToSnapshot(preRestoreSnapshot.data);
+      
       result.success = false;
       const errorMessage = e instanceof Error ? e.message : "Unknown error during restore.";
       result.errors.push(errorMessage);

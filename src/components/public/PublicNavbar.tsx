@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Logo } from "../ui/Logo";
 import { PUBLIC_ROUTES, APP_ROUTES } from "../../config/routes";
 import { motion } from "framer-motion";
+import { markLandingSeen } from "../../utils/firstVisit";
 
 const navLinks = [
   { name: "Features", href: PUBLIC_ROUTES.FEATURES },
@@ -45,6 +46,7 @@ export function PublicNavbar() {
         <div className="flex items-center gap-4">
           <Link
             to={APP_ROUTES.DASHBOARD}
+            onClick={markLandingSeen}
             className="text-sm font-medium px-4 py-2 rounded-full bg-primary text-primary-foreground hover:scale-105 transition-transform active:scale-95 shadow-sm"
           >
             Open Workspace

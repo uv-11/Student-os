@@ -5,14 +5,26 @@ import { AnimatedSection } from "../../components/public/AnimatedSection";
 import { BookOpen, CheckSquare, Coffee, Clock, Shield, Zap, Smartphone, ArrowRight } from "lucide-react";
 import { Seo } from "../../components/seo/Seo";
 import { motion } from "framer-motion";
-import { BackgroundVideo } from "../../components/public/BackgroundVideo";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { APP_ROUTES } from "../../config/routes";
+import { useState } from "react";
+import { markLandingSeen } from "../../utils/firstVisit";
 
 export default function LandingPage() {
+  const [hasSeenLanding] = useState(() => {
+    try {
+      return localStorage.getItem("studentos_has_seen_landing") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  if (hasSeenLanding) {
+    return <Navigate to={APP_ROUTES.DASHBOARD} replace />;
+  }
+
   return (
     <div className="flex flex-col gap-24 pb-24 relative overflow-x-hidden">
-      <BackgroundVideo />
       <Seo />
       
       <Hero />
@@ -339,6 +351,7 @@ export default function LandingPage() {
           </p>
           <Link
             to={APP_ROUTES.DASHBOARD}
+            onClick={markLandingSeen}
             className="group px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl shadow-foreground/20"
           >
             Open Workspace

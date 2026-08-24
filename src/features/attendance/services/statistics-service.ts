@@ -110,6 +110,7 @@ export class StatisticsService {
 
         let additionalConsecutiveClassesRequired = 0;
         let maximumBunkableClasses = 0;
+        let isMathematicallyImpossible = false;
 
         if (targetPercentage > 0 && targetPercentage <= 100) {
             let simulatedAttended = overall.totalAttended;
@@ -121,15 +122,20 @@ export class StatisticsService {
                     simulatedAttended++;
                     additionalConsecutiveClassesRequired++;
                     // Hard stop to prevent infinite loops if mathematically impossible 
-                    // (though always possible by adding to numerator and denominator)
-                    if (additionalConsecutiveClassesRequired > 1000) break;
+                    if (additionalConsecutiveClassesRequired > 1000) {
+                        isMathematicallyImpossible = true;
+                        break;
+                    }
                 }
             } else {
                 // How many can safely be missed?
                 while (this.calculatePercentage(simulatedAttended, simulatedAbsent + 1) >= targetPercentage) {
                     simulatedAbsent++;
                     maximumBunkableClasses++;
-                    if (maximumBunkableClasses > 1000) break;
+                    if (maximumBunkableClasses > 1000) {
+                        // Usually only happens if target is 0 or strange logic
+                        break;
+                    }
                 }
             }
         }
@@ -139,7 +145,8 @@ export class StatisticsService {
             currentPercentage,
             isTargetSatisfied,
             additionalConsecutiveClassesRequired,
-            maximumBunkableClasses
+            maximumBunkableClasses,
+            isMathematicallyImpossible
         };
     }
 

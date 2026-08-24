@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { APP_ROUTES, PUBLIC_ROUTES } from "../../config/routes";
 import { AnimatedSection } from "./AnimatedSection";
+import { markLandingSeen } from "../../utils/firstVisit";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export function Hero() {
@@ -46,6 +47,7 @@ export function Hero() {
           >
             <Link
               to={APP_ROUTES.DASHBOARD}
+              onClick={markLandingSeen}
               className="group w-full sm:w-auto px-8 py-4 rounded-2xl bg-foreground text-background font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl shadow-foreground/10"
             >
               Enter Workspace

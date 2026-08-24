@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { AttendanceSummaryWidget } from "../../components/dashboard/widgets/AttendanceSummaryWidget";
 import { TodayClassesWidget } from "../../components/dashboard/widgets/TodayClassesWidget";
 import { QuickActionsCard } from "../../components/dashboard/QuickActionsCard";
+import { PriorityWidget } from "../../components/dashboard/widgets/PriorityWidget";
 
 import { AssignmentsWidget } from "../../components/dashboard/widgets/AssignmentsWidget";
 import { CalendarWidget } from "../../components/dashboard/widgets/CalendarWidget";
@@ -26,6 +27,7 @@ export default function DashboardPage() {
 
       <div className="flex flex-col gap-4 lg:gap-6">
         <TodaySnapshotWidget />
+        <PriorityWidget />
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6">
           {/* Primary Grid - Mobile Order: Classes -> Attendance -> Quick Actions */}

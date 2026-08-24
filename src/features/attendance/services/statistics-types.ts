@@ -24,6 +24,7 @@ export interface RequirementAnalysis {
     readonly isTargetSatisfied: boolean;
     readonly additionalConsecutiveClassesRequired: number;
     readonly maximumBunkableClasses: number;
+    readonly isMathematicallyImpossible?: boolean;
 }
 
 export interface TimeSummary {

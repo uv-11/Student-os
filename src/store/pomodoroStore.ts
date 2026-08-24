@@ -12,13 +12,14 @@ interface ActiveTimerState {
   sessionTotal: number;
   timeRemaining: number;
   targetEndTime: number | null;
+  courseId?: string;
 }
 
 interface PomodoroState {
   sessions: PomodoroSession[];
   settings: PomodoroSettings;
   activeTimer: ActiveTimerState | null;
-  addSession: (mode: PomodoroMode, durationMinutes: number) => void;
+  addSession: (mode: PomodoroMode, durationMinutes: number, courseId?: string) => void;
   clearHistory: () => void;
   updateSettings: (updates: Partial<PomodoroSettings>) => void;
   setActiveTimer: (timer: ActiveTimerState | null) => void;
@@ -35,7 +36,7 @@ export const usePomodoroStore = create<PomodoroState>()(
       updateActiveTimer: (updates) => set((state) => ({ 
         activeTimer: state.activeTimer ? { ...state.activeTimer, ...updates } : null 
       })),
-      addSession: (mode, durationMinutes) => {
+      addSession: (mode, durationMinutes, courseId) => {
         set((state) => {
           const now = Date.now();
           const lastSession = state.sessions[0];
@@ -50,6 +51,7 @@ export const usePomodoroStore = create<PomodoroState>()(
             mode,
             durationMinutes,
             completedAt: now,
+            courseId,
           };
           return {
             sessions: [session, ...state.sessions].slice(0, 100), // cap history

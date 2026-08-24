@@ -9,4 +9,5 @@ export interface CalendarEvent {
   isCompleted?: boolean;
   priority?: string;
   description?: string;
+  courseId?: string;
 }

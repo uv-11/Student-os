@@ -8,6 +8,7 @@
 export interface Habit {
   id: string;
   name: string;
+  courseId?: string;
   description?: string;
   color?: string;  // hex color string, e.g. "#10b981"
   icon?: string;   // emoji, e.g. "📚"

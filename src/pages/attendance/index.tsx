@@ -47,7 +47,7 @@ export default function AttendancePage() {
                     return (
                         <div key={step} className="flex items-center gap-4">
                             <span className={isActive ? 'text-primary' : isPast ? 'text-muted-foreground' : 'text-muted'}>
-                                {step}
+                                {step === 'SUBJECTS' ? 'COURSES' : step}
                             </span>
                             {idx < STEPS.length - 1 && <span className="text-border">→</span>}
                         </div>
@@ -115,7 +115,7 @@ export default function AttendancePage() {
 
                 {/* 4. Subject Cards */}
                 <div className="mt-2">
-                    <h3 className="text-lg font-bold tracking-tight mb-4">Subjects</h3>
+                    <h3 className="text-lg font-bold tracking-tight mb-4">Courses</h3>
                     <SubjectStats />
                 </div>
             </div>
