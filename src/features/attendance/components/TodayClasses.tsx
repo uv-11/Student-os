@@ -36,7 +36,7 @@ export function TodayClasses() {
                     const record = item.attendanceRecord;
                     const subject = subjects.find(s => s.id === expected.subjectId);
                     
-                    const isCancelled = expected.status === ExpectedClassStatus.CANCELLED;
+                    const isCancelled = expected.status === ExpectedClassStatus.CANCELLED || record?.status === AttendanceStatus.CANCELLED;
                     const isHoliday = expected.status === ExpectedClassStatus.HOLIDAY;
                     const isPast = new Date(expected.date.getTime()).setHours(
                         parseInt(expected.startTime.split(':')[0]), 
@@ -94,13 +94,14 @@ export function TodayClasses() {
                                     {statusLabel}
                                 </span>
                                 
-                                {(!isCancelled && !isHoliday && !isFuture) && (
+                                {(!isHoliday && !isFuture && expected.status !== ExpectedClassStatus.CANCELLED) && (
                                     <div className="flex gap-1 ml-1">
                                         <Button 
                                             size="sm" 
                                             variant={record?.status === AttendanceStatus.PRESENT ? 'primary' : 'outline'}
                                             onClick={() => handleMark(expected.date, expected.subjectId, expected.timetableSlotId, expected.startTime, AttendanceStatus.PRESENT)}
                                             className={`h-8 w-8 p-0 min-w-0 flex items-center justify-center rounded-md ${record?.status === AttendanceStatus.PRESENT ? 'bg-success hover:bg-success text-success-foreground border-transparent' : ''}`}
+                                            title="Mark Present"
                                         >
                                             P
                                         </Button>
@@ -109,8 +110,18 @@ export function TodayClasses() {
                                             variant={record?.status === AttendanceStatus.ABSENT ? 'primary' : 'outline'}
                                             onClick={() => handleMark(expected.date, expected.subjectId, expected.timetableSlotId, expected.startTime, AttendanceStatus.ABSENT)}
                                             className={`h-8 w-8 p-0 min-w-0 flex items-center justify-center rounded-md ${record?.status === AttendanceStatus.ABSENT ? 'bg-danger hover:bg-danger text-danger-foreground border-transparent' : ''}`}
+                                            title="Mark Absent"
                                         >
                                             A
+                                        </Button>
+                                        <Button 
+                                            size="sm" 
+                                            variant={record?.status === AttendanceStatus.CANCELLED ? 'primary' : 'outline'}
+                                            onClick={() => handleMark(expected.date, expected.subjectId, expected.timetableSlotId, expected.startTime, AttendanceStatus.CANCELLED)}
+                                            className={`h-8 w-8 p-0 min-w-0 flex items-center justify-center rounded-md ${record?.status === AttendanceStatus.CANCELLED ? 'bg-foreground hover:bg-foreground text-background border-transparent' : ''}`}
+                                            title="Tag Cancelled"
+                                        >
+                                            C
                                         </Button>
                                     </div>
                                 )}

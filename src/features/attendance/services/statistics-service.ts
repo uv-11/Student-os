@@ -34,8 +34,9 @@ export class StatisticsService {
             if (!this.hasStarted(item)) continue;
 
             const status = item.expectedClass.status;
+            const isCancelled = status === ExpectedClassStatus.CANCELLED || item.attendanceRecord?.status === AttendanceStatus.CANCELLED;
             
-            if (status === ExpectedClassStatus.CANCELLED) stats.totalCancelled++;
+            if (isCancelled) stats.totalCancelled++;
             else if (status === ExpectedClassStatus.HOLIDAY) stats.totalHolidays++;
             else if (status === ExpectedClassStatus.EXTRA) stats.totalExtra++;
             else if (status === ExpectedClassStatus.RESCHEDULED) stats.totalRescheduled++;
@@ -244,6 +245,11 @@ export class StatisticsService {
     }
 
     private static isCountable(item: ResolvedAttendance): boolean {
+        // If a class was marked/tagged as cancelled, it is uncounted (reduces total classes)
+        if (item.attendanceRecord?.status === AttendanceStatus.CANCELLED) {
+            return false;
+        }
+
         // A class is countable if it was supposed to happen (SCHEDULED, EXTRA, RESCHEDULED)
         const status = item.expectedClass.status;
         return status === ExpectedClassStatus.SCHEDULED || 

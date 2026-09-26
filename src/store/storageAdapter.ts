@@ -16,9 +16,17 @@ export interface StorageAdapter extends StateStorage {
  * Synchronous, blocking, 5MB limit. Used for Phase 1.
  */
 const localStorageAdapter: StorageAdapter = {
-  getItem: (name) => localStorage.getItem(name),
-  setItem: (name, value) => localStorage.setItem(name, value),
-  removeItem: (name) => localStorage.removeItem(name),
+  getItem: (name) => (typeof localStorage !== "undefined" ? localStorage.getItem(name) : null),
+  setItem: (name, value) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(name, value);
+    }
+  },
+  removeItem: (name) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(name);
+    }
+  },
 };
 
 /**

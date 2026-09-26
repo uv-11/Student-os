@@ -24,7 +24,6 @@ const AnalyticsStudyPage = lazy(() => import("./pages/analytics/study"));
 const AuthPage = lazy(() => import("./pages/auth"));
 
 // Public Pages
-const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const AboutPage = lazy(() => import("./pages/public/AboutPage"));
 const FeaturesPage = lazy(() => import("./pages/public/FeaturesPage"));
 const RoadmapPage = lazy(() => import("./pages/public/RoadmapPage"));
@@ -36,6 +35,7 @@ const ContactPage = lazy(() => import("./pages/public/ContactPage"));
 // Routes config
 import { PUBLIC_ROUTES, APP_ROUTES, LEGACY_ROUTES } from "./config/routes";
 import { useAppStore } from "./store/appStore";
+import { PageSkeleton } from "./components/ui/SkeletonLoader";
 
 const WithAppLayout = ({ children }: { children: ReactNode }) => (
   <AppLayout>{children}</AppLayout>
@@ -68,10 +68,10 @@ function App() {
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <Suspense fallback={<div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>}>
+      <Suspense fallback={<PageSkeleton />}>
         <Routes>
         {/* Public Routes */}
-        <Route path={PUBLIC_ROUTES.HOME} element={<WithPublicLayout><LandingPage /></WithPublicLayout>} />
+        <Route path={PUBLIC_ROUTES.HOME} element={<Navigate to={APP_ROUTES.DASHBOARD} replace />} />
         <Route path={PUBLIC_ROUTES.ABOUT} element={<WithPublicLayout><AboutPage /></WithPublicLayout>} />
         <Route path={PUBLIC_ROUTES.FEATURES} element={<WithPublicLayout><FeaturesPage /></WithPublicLayout>} />
         <Route path={PUBLIC_ROUTES.ROADMAP} element={<WithPublicLayout><RoadmapPage /></WithPublicLayout>} />

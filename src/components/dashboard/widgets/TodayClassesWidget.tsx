@@ -2,7 +2,7 @@ import { BookOpen } from "lucide-react";
 import { useDashboardAttendance } from "../hooks/useDashboardAttendance";
 import { DashboardCard } from "../DashboardCard";
 import { EmptyState } from "../../ui/EmptyState";
-import { AttendanceStatus } from "../../../features/attendance/domain/types";
+import { AttendanceStatus, ExpectedClassStatus } from "../../../features/attendance/domain";
 
 export function TodayClassesWidget() {
   const { todayAttendance, getSubjectName, getSubjectColor, markAttendance } = useDashboardAttendance();
@@ -43,11 +43,15 @@ export function TodayClassesWidget() {
                       <span className="text-xs text-muted-foreground font-medium">{item.expectedClass.startTime} - {item.expectedClass.endTime}</span>
                     </div>
                   </div>
-                  {isMarked ? (
+                  {item.expectedClass.status === ExpectedClassStatus.CANCELLED ? (
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded font-bold shrink-0 bg-muted text-muted-foreground">
+                      Cancelled
+                    </span>
+                  ) : isMarked ? (
                     <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded font-bold shrink-0 ${
                       item.attendanceRecord!.status === AttendanceStatus.PRESENT ? 'bg-success/10 text-success' :
                       item.attendanceRecord!.status === AttendanceStatus.ABSENT ? 'bg-danger/10 text-danger' :
-                      'bg-warning/10 text-warning'
+                      'bg-muted text-muted-foreground'
                     }`}>
                       {item.attendanceRecord!.status}
                     </span>
@@ -64,6 +68,12 @@ export function TodayClassesWidget() {
                         className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-danger/10 hover:bg-danger/20 text-danger rounded transition-colors"
                       >
                         Absent
+                      </button>
+                      <button 
+                        onClick={() => markAttendance(item.expectedClass.date, item.expectedClass.subjectId, item.expectedClass.timetableSlotId, item.expectedClass.startTime, AttendanceStatus.CANCELLED)}
+                        className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-muted hover:bg-accent text-muted-foreground rounded transition-colors"
+                      >
+                        Cancel
                       </button>
                     </div>
                   )}
