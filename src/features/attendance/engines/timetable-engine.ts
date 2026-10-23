@@ -8,13 +8,49 @@ export function determineEffectiveVersion(
     versions: TimetableVersion[],
     date: Date
 ): TimetableVersion | null {
-    const effectiveVersion = versions.find(v => {
-        const isAfterStart = date.getTime() >= v.validFrom.getTime();
-        const isBeforeEnd = v.validUntil === null || date.getTime() < v.validUntil.getTime();
+    if (!versions || versions.length === 0) return null;
+
+    // Filter valid versions and sort by validFrom ascending
+    const sorted = [...versions]
+        .filter(v => v && v.validFrom && !isNaN(new Date(v.validFrom).getTime()))
+        .sort((a, b) => new Date(a.validFrom).getTime() - new Date(b.validFrom).getTime());
+
+    const dateTime = date.getTime();
+
+    // 1. Direct timestamp check
+    const effectiveVersion = sorted.find(v => {
+        const vStart = new Date(v.validFrom).getTime();
+        const vEnd = v.validUntil !== null ? new Date(v.validUntil).getTime() : null;
+
+        const isAfterStart = dateTime >= vStart;
+        const isBeforeEnd = vEnd === null || dateTime < vEnd;
         return isAfterStart && isBeforeEnd;
     });
 
-    return effectiveVersion || null;
+    if (effectiveVersion) return effectiveVersion;
+
+    // 2. Fallback to start-of-day comparison (handles cases where date or validFrom has a time component)
+    const targetDay = new Date(date);
+    targetDay.setHours(0, 0, 0, 0);
+    const targetDayTime = targetDay.getTime();
+
+    const effectiveByDay = sorted.find(v => {
+        const vStartDay = new Date(v.validFrom);
+        vStartDay.setHours(0, 0, 0, 0);
+        const vStartDayTime = vStartDay.getTime();
+
+        const vEndDayTime = v.validUntil !== null ? (() => {
+            const vEndDay = new Date(v.validUntil);
+            vEndDay.setHours(0, 0, 0, 0);
+            return vEndDay.getTime();
+        })() : null;
+
+        const isAfterStart = targetDayTime >= vStartDayTime;
+        const isBeforeEnd = vEndDayTime === null || targetDayTime < vEndDayTime;
+        return isAfterStart && isBeforeEnd;
+    });
+
+    return effectiveByDay || null;
 }
 
 /**
@@ -22,8 +58,12 @@ export function determineEffectiveVersion(
  * boundaries or invalid gaps between transitions.
  */
 export function resolveVersionBoundaries(versions: TimetableVersion[]): TimetableVersion[] {
+    if (!versions || versions.length === 0) return [];
+
     // Sort by validFrom ascending
-    const sorted = [...versions].sort((a, b) => a.validFrom.getTime() - b.validFrom.getTime());
+    const sorted = [...versions]
+        .filter(v => v && v.validFrom)
+        .sort((a, b) => new Date(a.validFrom).getTime() - new Date(b.validFrom).getTime());
     
     for (let i = 0; i < sorted.length - 1; i++) {
         const current = sorted[i];
@@ -32,11 +72,11 @@ export function resolveVersionBoundaries(versions: TimetableVersion[]): Timetabl
         // If the current version is open-ended, automatically close it exactly when the next one starts
         if (current.validUntil === null) {
             sorted[i] = { ...current, validUntil: new Date(next.validFrom.getTime()) };
-        }
-
-        // Ensure no invalid overlaps (current cannot end after next starts)
-        if (sorted[i].validUntil!.getTime() > next.validFrom.getTime()) {
-            throw new Error("Timetable versions cannot overlap.");
+        } else {
+            // Ensure no invalid overlaps (current cannot end after next starts)
+            if (sorted[i].validUntil!.getTime() > next.validFrom.getTime()) {
+                throw new Error("Timetable versions cannot overlap.");
+            }
         }
     }
 
@@ -70,9 +110,12 @@ export function prepareNewVersion(
  * Ensures we don't insert a version earlier than explicitly closed historical versions.
  */
 function validateVersionBoundaries(versions: TimetableVersion[], newValidFrom: Date): void {
+    const newStartTime = newValidFrom.getTime();
     for (const version of versions) {
-        if (version.validUntil !== null && newValidFrom.getTime() < version.validUntil.getTime()) {
+        if (version.validUntil !== null && newStartTime < new Date(version.validUntil).getTime()) {
             throw new Error("New version validFrom date cannot precede existing closed versions.");
         }
     }
 }
+
+

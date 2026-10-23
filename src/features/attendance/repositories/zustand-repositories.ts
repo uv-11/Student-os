@@ -84,18 +84,12 @@ export class ZustandSubjectRepository implements SubjectRepository {
     }
 }
 
+import { determineEffectiveVersion } from '../engines/timetable-engine';
+
 export class ZustandTimetableVersionRepository implements TimetableVersionRepository {
     async findActiveVersion(semesterId: string, date: Date): Promise<TimetableVersion | null> {
-        const state = attendanceStore.getState();
-        const dateTime = date.getTime();
-        const version = Object.values(state.timetableVersions).find(v => {
-            if (v.semesterId !== semesterId) return false;
-            const vStart = new Date(v.validFrom).getTime();
-            const isAfterStart = dateTime >= vStart;
-            const isBeforeEnd = v.validUntil === null || dateTime < new Date(v.validUntil).getTime();
-            return isAfterStart && isBeforeEnd;
-        });
-        return version || null;
+        const versions = await this.findVersionsForSemester(semesterId);
+        return determineEffectiveVersion(versions, date);
     }
 
     async findVersionsForSemester(semesterId: string): Promise<TimetableVersion[]> {
@@ -137,6 +131,18 @@ export class ZustandTimetableVersionRepository implements TimetableVersionReposi
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [id]: _, ...rest } = state.timetableSlots;
             return { timetableSlots: rest };
+        });
+    }
+
+    async removeTimetableSlotsForVersion(timetableVersionId: string): Promise<void> {
+        attendanceStore.setState(state => {
+            const remainingSlots: Record<string, TimetableSlot> = {};
+            for (const [id, slot] of Object.entries(state.timetableSlots)) {
+                if (slot.timetableVersionId !== timetableVersionId) {
+                    remainingSlots[id] = slot;
+                }
+            }
+            return { timetableSlots: remainingSlots };
         });
     }
 }

@@ -89,7 +89,7 @@ export class AttendanceService {
         const recordMap = new Map<string, AttendanceRecord>();
         
         for (const record of attendanceRecords) {
-            const date = new Date(record.date.getTime());
+            const date = new Date(record.date instanceof Date ? record.date.getTime() : new Date(record.date).getTime());
             date.setHours(0, 0, 0, 0);
             
             const key = `${date.getTime()}_${record.subjectId}_${record.timetableSlotId}`;
@@ -103,7 +103,13 @@ export class AttendanceService {
             // For EXTRA classes, timetableSlotId is null, but we save the record with startTime as the slotId.
             const matchKey = expected.timetableSlotId || expected.startTime;
             const key = `${expectedDate.getTime()}_${expected.subjectId}_${matchKey}`;
-            const matchingRecord = recordMap.get(key) || null;
+            let matchingRecord = recordMap.get(key) || null;
+
+            // Resilient fallback for legacy records that may have been recorded with startTime instead of slotId
+            if (!matchingRecord && expected.timetableSlotId) {
+                const fallbackKey = `${expectedDate.getTime()}_${expected.subjectId}_${expected.startTime}`;
+                matchingRecord = recordMap.get(fallbackKey) || null;
+            }
 
             return {
                 expectedClass: expected,

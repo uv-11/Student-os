@@ -36,12 +36,15 @@ const localStorageAdapter: StorageAdapter = {
  */
 export const indexedDBAdapter: StorageAdapter = {
   getItem: async (name) => {
+    if (typeof indexedDB === "undefined") return null;
     return (await get(name)) || null;
   },
   setItem: async (name, value) => {
+    if (typeof indexedDB === "undefined") return;
     await set(name, value);
   },
   removeItem: async (name) => {
+    if (typeof indexedDB === "undefined") return;
     await del(name);
   },
 };

@@ -14,6 +14,9 @@ import type { OverallStatistics, SubjectStatistics } from '../services/statistic
 import { AttendanceStatus } from '../domain';
 import type { Semester, Subject, TimetableVersion, TimetableSlot } from '../domain';
 
+import { determineEffectiveVersion } from '../engines/timetable-engine';
+import { normalizeToStartOfDay } from '../utils/date';
+
 export function useAttendanceData() {
     // We subscribe to the entire store to trigger re-renders when data changes.
     // In a massive app, we'd slice this, but for this feature it ensures our
@@ -165,17 +168,105 @@ export function useAttendanceCommands() {
     const getOrCreateInitialTimetableVersion = useCallback(async (semesterId: string, validFrom: Date) => {
         const versions = await timetableVersionRepo.findVersionsForSemester(semesterId);
         if (versions.length > 0) {
-            return versions[0];
+            const effective = determineEffectiveVersion(versions, validFrom);
+            return effective || versions[0];
         }
         
         const version: TimetableVersion = {
             id: crypto.randomUUID(),
             semesterId,
-            validFrom,
+            validFrom: normalizeToStartOfDay(validFrom),
             validUntil: null
         };
         await timetableVersionRepo.createVersion(version);
         return version;
+    }, []);
+
+    const getOrCreateEditableVersion = useCallback(async (semesterId: string, effectiveDate: Date) => {
+        const normalizedDate = normalizeToStartOfDay(effectiveDate);
+        const targetTime = normalizedDate.getTime();
+        const versions = await timetableVersionRepo.findVersionsForSemester(semesterId);
+
+        // 1. If no versions exist for this semester, create the initial one
+        if (versions.length === 0) {
+            const initialVersion: TimetableVersion = {
+                id: crypto.randomUUID(),
+                semesterId,
+                validFrom: normalizedDate,
+                validUntil: null
+            };
+            await timetableVersionRepo.createVersion(initialVersion);
+            return initialVersion;
+        }
+
+        // Sort existing versions ascending by validFrom
+        const sortedVersions = [...versions]
+            .filter(v => v && v.validFrom)
+            .sort((a, b) => normalizeToStartOfDay(a.validFrom).getTime() - normalizeToStartOfDay(b.validFrom).getTime());
+
+        // Find the currently open version (validUntil === null)
+        const openVersion = sortedVersions.find(v => v.validUntil === null);
+
+        if (openVersion) {
+            const openStartTime = normalizeToStartOfDay(openVersion.validFrom).getTime();
+
+            // Case A: The open version was already created on this exact effective date.
+            // Re-use this version directly so multiple edits on the same day modify it.
+            if (openStartTime === targetTime) {
+                return openVersion;
+            }
+
+            // Case B: The open version started in the past (openStartTime < targetTime).
+            // Close openVersion at normalizedDate, and create a new version starting at normalizedDate.
+            if (openStartTime < targetTime) {
+                // Close previous version
+                await timetableVersionRepo.updateVersion({
+                    ...openVersion,
+                    validUntil: normalizedDate
+                });
+
+                // Create new version
+                const newVersion: TimetableVersion = {
+                    id: crypto.randomUUID(),
+                    semesterId,
+                    validFrom: normalizedDate,
+                    validUntil: null
+                };
+                await timetableVersionRepo.createVersion(newVersion);
+
+                // Copy active slots from openVersion into newVersion
+                const existingSlots = await timetableVersionRepo.findTimetableSlots(openVersion.id);
+                if (existingSlots.length > 0) {
+                    const clonedSlots: TimetableSlot[] = existingSlots.map(s => ({
+                        id: crypto.randomUUID(),
+                        timetableVersionId: newVersion.id,
+                        subjectId: s.subjectId,
+                        dayOfWeek: s.dayOfWeek,
+                        startTime: s.startTime,
+                        endTime: s.endTime
+                    }));
+                    await timetableVersionRepo.createTimetableSlots(clonedSlots);
+                }
+
+                return newVersion;
+            }
+        }
+
+        // If targetDate falls into an existing version interval, return the effective one
+        const effective = determineEffectiveVersion(sortedVersions, normalizedDate);
+        if (effective) {
+            return effective;
+        }
+
+        // Fallback: create a new version starting at normalizedDate
+        const fallbackVersion: TimetableVersion = {
+            id: crypto.randomUUID(),
+            semesterId,
+            validFrom: normalizedDate,
+            validUntil: null
+        };
+        await timetableVersionRepo.createVersion(fallbackVersion);
+        return fallbackVersion;
     }, []);
 
     const addTimetableSlot = useCallback(async (slot: TimetableSlot) => {
@@ -195,6 +286,7 @@ export function useAttendanceCommands() {
         removeSubject,
         createTimetableVersion,
         getOrCreateInitialTimetableVersion,
+        getOrCreateEditableVersion,
         addTimetableSlot,
         removeTimetableSlot
     };

@@ -15,3 +15,30 @@ export function parseLocalDate(dateString: string): Date {
     const [y, m, d] = dateString.split('-').map(Number);
     return new Date(y, m - 1, d);
 }
+
+/**
+ * Normalizes any Date, ISO string, or timestamp to the local midnight Date (00:00:00.000).
+ */
+export function normalizeToStartOfDay(date: Date | string | number): Date {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+/**
+ * Safely normalizes a date to local midnight, falling back to a default if invalid or missing.
+ */
+export function safeNormalizeDate(
+    date: Date | string | number | null | undefined,
+    fallback: Date = new Date(0)
+): Date {
+    if (date === null || date === undefined || date === '') {
+        return normalizeToStartOfDay(fallback);
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) {
+        return normalizeToStartOfDay(fallback);
+    }
+    return normalizeToStartOfDay(d);
+}
+

@@ -3,6 +3,8 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { useAttendanceCommands, useAttendanceData } from '../application/hooks';
 import { DayOfWeek, AttendanceStatus, type TimetableVersion } from '../domain';
+import { determineEffectiveVersion } from '../engines/timetable-engine';
+import { toLocalDateString, parseLocalDate } from '../utils/date';
 
 const DAYS = [
     DayOfWeek.MONDAY,
@@ -33,13 +35,18 @@ interface TimetableSetupProps {
 }
 
 export function TimetableSetup({ onComplete, onBack, readOnly = false, onEditSchedule }: TimetableSetupProps) {
-    const { getOrCreateInitialTimetableVersion, addTimetableSlot, removeTimetableSlot, addSubject, updateSubject, removeSubject, markAttendance } = useAttendanceCommands();
-    const { activeSemester, subjects, timetableSlots, resolvedAttendance } = useAttendanceData();
+    const { getOrCreateInitialTimetableVersion, getOrCreateEditableVersion, addTimetableSlot, removeTimetableSlot, addSubject, updateSubject, removeSubject, markAttendance } = useAttendanceCommands();
+    const { activeSemester, subjects, timetableVersions, timetableSlots, resolvedAttendance } = useAttendanceData();
     
     const [activeVersion, setActiveVersion] = useState<TimetableVersion | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successToast, setSuccessToast] = useState('');
+
+    const [effectiveDate, setEffectiveDate] = useState<string>(() => {
+        const today = new Date();
+        return toLocalDateString(today);
+    });
 
     const [weekOffset, setWeekOffset] = useState(0);
 
@@ -111,11 +118,20 @@ export function TimetableSetup({ onComplete, onBack, readOnly = false, onEditSch
         return map;
     }, [weekOffset]);
 
-    // Active slots for this version
+    // Active slots for this week (in readOnly mode) or active version (in setup/edit mode)
     const slots = useMemo(() => {
+        if (readOnly) {
+            const versionIds = new Set<string>();
+            DAYS.forEach(day => {
+                const date = weekDates[day];
+                const ver = determineEffectiveVersion(timetableVersions, date);
+                if (ver) versionIds.add(ver.id);
+            });
+            return timetableSlots.filter(s => versionIds.has(s.timetableVersionId));
+        }
         if (!activeVersion) return [];
         return timetableSlots.filter(s => s.timetableVersionId === activeVersion.id);
-    }, [activeVersion, timetableSlots]);
+    }, [readOnly, weekDates, timetableVersions, timetableSlots, activeVersion]);
 
     // Find next upcoming class ID
     const nextUpcomingSlotId = useMemo(() => {
@@ -141,14 +157,21 @@ export function TimetableSetup({ onComplete, onBack, readOnly = false, onEditSch
         return targetSlotId;
     }, [readOnly, slots, weekDates]);
 
-    // Initialize version
+    // Initialize version for editing
     useEffect(() => {
-        if (activeSemester && !activeVersion) {
+        if (!activeSemester || readOnly) return;
+
+        if (timetableVersions.length === 0) {
             getOrCreateInitialTimetableVersion(activeSemester.id, activeSemester.startDate)
                 .then(v => setActiveVersion(v))
                 .catch(e => console.error("Failed to create/get version", e));
+        } else {
+            const effDate = parseLocalDate(effectiveDate);
+            getOrCreateEditableVersion(activeSemester.id, effDate)
+                .then(v => setActiveVersion(v))
+                .catch(e => console.error("Failed to create/get editable version", e));
         }
-    }, [activeSemester, activeVersion, getOrCreateInitialTimetableVersion]);
+    }, [activeSemester, readOnly, effectiveDate, timetableVersions.length, getOrCreateInitialTimetableVersion, getOrCreateEditableVersion]);
 
     const [selectedDay, setSelectedDay] = useState<DayOfWeek>(DayOfWeek.MONDAY);
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -340,6 +363,29 @@ export function TimetableSetup({ onComplete, onBack, readOnly = false, onEditSch
                 </div>
             )}
 
+            {/* Effective Date Banner when Editing Existing Schedule */}
+            {!readOnly && timetableVersions.length > 0 && (
+                <div className="mb-6 p-4 bg-muted/30 rounded-xl border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground block">
+                            Schedule Change Effective Date
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Classes from this date forward will follow the new schedule. Historical classes and recorded attendance remain preserved.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase">Effective From:</label>
+                        <input
+                            type="date"
+                            value={effectiveDate}
+                            onChange={e => setEffectiveDate(e.target.value)}
+                            className="h-9 px-3 rounded-md border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                    </div>
+                </div>
+            )}
+
             <div className={`flex flex-col ${readOnly ? '' : 'xl:flex-row'} gap-8`}>
                 {/* Add Class Form (Only in Setup Mode) */}
                 {!readOnly && (
@@ -472,8 +518,13 @@ export function TimetableSetup({ onComplete, onBack, readOnly = false, onEditSch
 
                             {/* Days Columns */}
                             {DAYS.map(day => {
-                                const daySlots = slots.filter(s => s.dayOfWeek === day);
                                 const classDate = weekDates[day];
+                                const dayEffectiveVersion = readOnly 
+                                    ? determineEffectiveVersion(timetableVersions, classDate)
+                                    : activeVersion;
+                                const daySlots = dayEffectiveVersion 
+                                    ? timetableSlots.filter(s => s.timetableVersionId === dayEffectiveVersion.id && s.dayOfWeek === day)
+                                    : [];
 
                                 if (import.meta.env.DEV) {
                                     for (let i = 0; i < daySlots.length; i++) {

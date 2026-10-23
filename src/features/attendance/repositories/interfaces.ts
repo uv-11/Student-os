@@ -31,6 +31,7 @@ export interface TimetableVersionRepository {
     createTimetableSlots(slots: TimetableSlot[]): Promise<void>;
     updateTimetableSlots(slots: TimetableSlot[]): Promise<void>;
     removeTimetableSlot(id: string): Promise<void>;
+    removeTimetableSlotsForVersion?(timetableVersionId: string): Promise<void>;
 }
 
 export interface AcademicCalendarRepository {
